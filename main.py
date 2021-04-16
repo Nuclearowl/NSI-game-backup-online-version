@@ -11,7 +11,7 @@ BLUE = (0, 0, 255)
 MAP_SIZE = 12
 
 class Text:
-    #cree une classe permettant de modifier et utuliser du text TITI
+    #cree une classe permettant de modifier et utuliser du text TOTO
     def __init__(self, text, pos,**options):
         self.text = text
         self.pos = pos
