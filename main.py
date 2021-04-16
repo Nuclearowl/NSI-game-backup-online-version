@@ -356,6 +356,7 @@ class Battle:
             self.game.map.tiles[originalsquare[0] * MAP_SIZE + originalsquare[1] - 1].type = self.game.map.tiles[nextsquare[0]* MAP_SIZE + nextsquare[1] - 1].type
             self.game.map.tiles[nextsquare[0] * MAP_SIZE + nextsquare[1] - 1].type = a
             self.swapped = False
+            self.game.map.draw()
 
 
 class Game:
