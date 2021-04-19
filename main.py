@@ -332,6 +332,7 @@ class Map:
                 self.tilenextto(i, 2, (10, 11),(8,12,13))
             if self.random_gen[i] <= 2:
                 self.tilenextto(i,4,(12,13))
+
         for i in range(MAP_SIZE):
             for j in range(MAP_SIZE):
                 self.tiles.append(Tile(self.random_gen[MAP_SIZE*i + j], i, j))
@@ -397,9 +398,29 @@ class Tile:
             a = 1
 
 class ContextWindow:
-    def __init__(self):
-        a = 1
+    def __init__(self,game):
+        self.game = game
+        self.title_entries = ["grass","grass","grass","ice","sand","forest","swamp","boulder","snowy mountain","mountain","lava","volcano","water",'water']
+        self.textentries = ["a good place to settle","a good place to settle","a good place to settle","warmer clothes are needed to survive here","nothing usefull here","a source of wood","a good place to hide","ideal for a quarry","cold and desolate","difficult to traverse","hot and dangerous","an active hasard","a boat is needed to traverse this",'a boat is needed to traverse this']
+        self.clickableinfo = 0
+        self.clickabledescription = 0
+        self.info = Text("", pos=(40, 152))
+        self.description = Text("", pos=(40, 152))
 
+    def set_description(self, tilenb):
+        self.clickableinfo = self.title_entries[self.game.map.tiles[tilenb].type]
+        self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
+    
+    def draw(self):
+        pygame.draw.rect(Game.screen, Color('gray'), self.info.rect)
+        self.info = Text(self.clickableinfo, pos=(40,80))
+        self.info.draw()
+        pygame.draw.rect(Game.screen, Color('gray'), self.description.rect, )
+        self.description = Text(self.clickabledescription, pos=(40, 152))
+        self.description.fontsize = 36
+        self.description.set_font()
+        self.description.render()
+        self.description.draw()
 class Team:
     def __init__(self, name, color):
         self.name = name
