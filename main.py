@@ -398,8 +398,7 @@ class Tile:
             a = 1
 
 class ContextWindow:
-    def __init__(self,game):
-        self.game = game
+    def __init__(self):
         self.title_entries = ["grass","grass","grass","ice","sand","forest","swamp","boulder","snowy mountain","mountain","lava","volcano","water",'water']
         self.textentries = ["a good place to settle","a good place to settle","a good place to settle","warmer clothes are needed to survive here","nothing usefull here","a source of wood","a good place to hide","ideal for a quarry","cold and desolate","difficult to traverse","hot and dangerous","an active hasard","a boat is needed to traverse this",'a boat is needed to traverse this']
         self.clickableinfo = 0
@@ -421,6 +420,7 @@ class ContextWindow:
         self.description.set_font()
         self.description.render()
         self.description.draw()
+
 class Team:
     def __init__(self, name, color):
         self.name = name
