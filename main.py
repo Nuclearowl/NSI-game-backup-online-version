@@ -142,8 +142,7 @@ class Battle:
                          pygame.image.load("lava.png").convert(),pygame.image.load("volcano.png").convert(),
                          pygame.image.load("water.png").convert(),pygame.image.load("water.png").convert(), ]
             #liste des informations pertinentes sur ces tuiles
-        self.title_entries = ["grass","grass","grass","ice","sand","forest","swamp","boulder","snowy mountain","mountain","lava","volcano","water",'water']
-        self.textentries = ["a good place to settle","a good place to settle","a good place to settle","warmer clothes are needed to survive here","nothing usefull here","a source of wood","a good place to hide","ideal for a quarry","cold and desolate","difficult to traverse","hot and dangerous","an active hasard","a boat is needed to traverse this",'a boat is needed to traverse this']
+       
         self.blueunits = {}
         self.redunits = {}
         self.turn = "blue"
@@ -184,10 +183,8 @@ class Battle:
                         for i in range(MAP_SIZE):
                             for j in range(1, MAP_SIZE + 1):
                                 if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
-                                    pygame.draw.rect(Game.screen, Color('gray'), Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
-                                    self.clickableinfo = self.title_entries[self.game.map.random_gen[i*MAP_SIZE+j-1]]
-                                    self.clickabledescription = self.textentries[self.game.map.random_gen[i*MAP_SIZE+j-1]]
+                                    self.game.contextWindow.set_description(i*MAP_SIZE+j-1)
                                     break
                     elif self.swapped :
                         for i in range(MAP_SIZE):
@@ -207,21 +204,13 @@ class Battle:
                     for i in range(MAP_SIZE) :
                         for j in range(1, MAP_SIZE+1):
                             if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
-                                pygame.draw.rect(Game.screen, Color('gray'), self.info.rect)
-                                self.info = Text(self.clickableinfo, pos=(40,80))
-                                self.info.draw()
-                                pygame.draw.rect(Game.screen, Color('gray'), self.description.rect, )
-                                self.description = Text(self.clickabledescription, pos=(40, 152))
-                                self.description.fontsize = 36
-                                self.description.set_font()
-                                self.description.render()
-                                self.description.draw()
+                                self.game.contextWindow.draw()
                     self.clicking = False
                 if event.type == WINDOWMAXIMIZED:
                     Game.screen.fill(Color('gray'))
                     self.info.draw()
                     self.description.draw()
-                    Game.map.draw()
+                    self.game.map.draw()
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -231,7 +220,7 @@ class Battle:
                     Game.screen.fill(Color('gray'))
                     self.info.draw()
                     self.description.draw()
-                    Game.map.draw()
+                    self.game.map.draw()
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -267,7 +256,7 @@ class Game:
         if self.menu.run() == "battle":
             self.battle = Battle(self)
             self.map = Map()
-            self.contextWindow = ContextWindow()
+            self.contextWindow = ContextWindow(self)
             self.battle.run()
 
 class Map:
@@ -343,9 +332,10 @@ class Map:
                 self.tilenextto(i, 2, (10, 11),(8,12,13))
             if self.random_gen[i] <= 2:
                 self.tilenextto(i,4,(12,13))
+
         for i in range(MAP_SIZE):
-            for j in range(1, MAP_SIZE + 1):
-                self.tiles.append(Tile(self.random_gen[MAP_SIZE*i+j-1], (i, j)))
+            for j in range(MAP_SIZE):
+                self.tiles.append(Tile(self.random_gen[MAP_SIZE*i+j], (i, j)))
 
     def tilenextto(self,i,newcolor,illegaladjacentcolors = None,necessaryadjacentcolors = None):
         necessary = 0
@@ -386,7 +376,7 @@ class Map:
         for i in range(len(self.tiles)):
             img = self.colorgen[self.tiles[i].type]
             rect = img.get_rect()
-            rect.topleft = self.w / 2 + rect.width * self.tiles[i].id[0], rect.height * self.tiles[i].id[1]
+            rect.topleft = self.w / 2 + rect.width * self.tiles[i].id[0], rect.height * (self.tiles[i].id[1]+1)
             Game.screen.blit(img, rect)
 
 class Tile:
@@ -396,9 +386,29 @@ class Tile:
 
 
 class ContextWindow:
-    def __init__(self):
-        a = 1
+    def __init__(self,game):
+        self.game = game
+        self.title_entries = ["grass","grass","grass","ice","sand","forest","swamp","boulder","snowy mountain","mountain","lava","volcano","water",'water']
+        self.textentries = ["a good place to settle","a good place to settle","a good place to settle","warmer clothes are needed to survive here","nothing usefull here","a source of wood","a good place to hide","ideal for a quarry","cold and desolate","difficult to traverse","hot and dangerous","an active hasard","a boat is needed to traverse this",'a boat is needed to traverse this']
+        self.clickableinfo = 0
+        self.clickabledescription = 0
+        self.info = Text("", pos=(40, 152))
+        self.description = Text("", pos=(40, 152))
 
+    def set_description(self, tilenb):
+        self.clickableinfo = self.title_entries[self.game.map.tiles[tilenb].type]
+        self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
+    
+    def draw(self):
+        pygame.draw.rect(Game.screen, Color('gray'), self.info.rect)
+        self.info = Text(self.clickableinfo, pos=(40,80))
+        self.info.draw()
+        pygame.draw.rect(Game.screen, Color('gray'), self.description.rect, )
+        self.description = Text(self.clickabledescription, pos=(40, 152))
+        self.description.fontsize = 36
+        self.description.set_font()
+        self.description.render()
+        self.description.draw()
 class Team:
     def __init__(self):
         a = 1
