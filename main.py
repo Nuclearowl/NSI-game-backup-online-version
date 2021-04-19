@@ -160,113 +160,9 @@ class Battle:
         self.nextsquare= (0,0)
         self.random_gen = []
 
-    def create_map(self):
-        # generation de monde random
-        for i in range(MAP_SIZE**2):
-            self.random_gen.append(random.randint(0,13))
-        for i in range(len(self.random_gen)):
-            #Des parametres afin d'empecher certains scenarios detrimentales au jeu et creer un map logique
-            if self.random_gen[i] == 11:
-                self.tilenextto(i,7,necessaryadjacentcolors=(10,None))
-            if self.random_gen[i] == 10:
-                self.tilenextto(i,9,None,(11,None))
-            if self.random_gen[i] == 8:
-                self.tilenextto(i,9,(10,11))
-            if self.random_gen[i] == 9:
-                self.tilenextto(i,10,(11,None),None)
-            if self.random_gen[i] >=12:
-                if self.tilenextto(i, 3, (8,None)):
-                    None
-                else :
-                    self.tilenextto(i, 7, (10, 11))
-            if self.random_gen[i] == 6:
-                self.tilenextto(i,5,necessaryadjacentcolors=(12,13))
-            if self.random_gen[i] == 5:
-                if self.tilenextto(i,7,(10,11)):
-                    None
-                else :
-                    self.tilenextto(i,6,(12,13))
-            if self.random_gen[i] == 4:
-                self.tilenextto(i, 2, necessaryadjacentcolors=(12,13))
-            if self.random_gen[i] == 3:
-                self.tilenextto(i, 2, (10, 11),(8,12,13))
-            if self.random_gen[i] <= 2:
-                self.tilenextto(i,4,(12,13))
-        for i in range(len(self.random_gen)):
-            #Vu que le programme va de tuile en tuile certains bugs peuvent se passer sur la generation il faut donc refaire le programme d'avant de maniere independante
-            if self.random_gen[i] == 11:
-                self.tilenextto(i,7,necessaryadjacentcolors=(10,None))
-            if self.random_gen[i] == 10:
-                self.tilenextto(i,9,None,(11,None))
-            if self.random_gen[i] == 8:
-                self.tilenextto(i,9,(10,11))
-            if self.random_gen[i] == 9:
-                self.tilenextto(i,10,(11,None),None)
-            if self.random_gen[i] >=12:
-                if self.tilenextto(i, 3, (8,None)):
-                    None
-                else :
-                    self.tilenextto(i, 7, (10, 11))
-            if self.random_gen[i] == 6:
-                self.tilenextto(i,5,necessaryadjacentcolors=(12,13))
-            if self.random_gen[i] == 5:
-                if self.tilenextto(i,7,(10,11)):
-                    None
-                else :
-                    self.tilenextto(i,6,(12,13))
-            if self.random_gen[i] == 4:
-                self.tilenextto(i, 2, necessaryadjacentcolors=(12,13))
-            if self.random_gen[i] == 3:
-                self.tilenextto(i, 2, (10, 11),(8,12,13))
-            if self.random_gen[i] <= 2:
-                self.tilenextto(i,4,(12,13))
-
-
-
-        #for i in range(MAP_SIZE):
-         #   for j in range(1, MAP_SIZE + 1):
-          #      #pygame.draw.rect(Game.screen, self.colorgen[self.random_gen[i*MAP_SIZE+j-1]], Rect(self.w / 2 + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize))
-           #     rect = self.colorgen[self.random_gen[i*MAP_SIZE+j-1]].get_rect()
-            #    rect.topleft = self.w / 2 + self.tilesize * i,self.tilesize * j
-             #   Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect)
-
-    def tilenextto(self,i,newcolor,illegaladjacentcolors = None,necessaryadjacentcolors = None):
-        necessary = 0
-        if necessaryadjacentcolors is None:
-            necessary = 1
-        if illegaladjacentcolors is not None:
-            if i % MAP_SIZE != 0:
-                if self.random_gen[i - 1] in illegaladjacentcolors:
-                    self.random_gen[i] = newcolor
-            if (i+1) % MAP_SIZE != 0:
-                if self.random_gen[i + 1] in illegaladjacentcolors:
-                    self.random_gen[i] = newcolor
-            if i < MAP_SIZE ** 2 - MAP_SIZE :
-                if self.random_gen[i + MAP_SIZE] in illegaladjacentcolors:
-                    self.random_gen[i] = newcolor
-            if i > MAP_SIZE - 1:
-                if self.random_gen[i - MAP_SIZE] in illegaladjacentcolors:
-                    self.random_gen[i] = newcolor
-        if necessaryadjacentcolors is not None:
-            if i % MAP_SIZE != 0:
-                if self.random_gen[i - 1] in necessaryadjacentcolors:
-                    necessary = 1
-            if (i+1) % MAP_SIZE != 0:
-                if self.random_gen[i + 1]  in necessaryadjacentcolors:
-                    necessary = 1
-            if i < MAP_SIZE ** 2 - MAP_SIZE :
-                if self.random_gen[i + MAP_SIZE] in necessaryadjacentcolors:
-                    necessary = 1
-            if i > MAP_SIZE - 1:
-                if self.random_gen[i - MAP_SIZE] in necessaryadjacentcolors:
-                    necessary = 1
-        if necessary == 0:
-            self.random_gen[i] = newcolor
-        if self.random_gen[i] == newcolor:
-            return True
-
     def run(self):
         #self.create_map()
+        self.game.map.draw()
         Battle.running = True
         while Battle.running:
             #Prend tous les evenements du joueur
@@ -450,6 +346,7 @@ class Map:
         for i in range(MAP_SIZE):
             for j in range(1, MAP_SIZE + 1):
                 self.tiles.append(Tile(self.random_gen[MAP_SIZE*i+j-1], (i, j)))
+
     def tilenextto(self,i,newcolor,illegaladjacentcolors = None,necessaryadjacentcolors = None):
         necessary = 0
         if necessaryadjacentcolors is None:
