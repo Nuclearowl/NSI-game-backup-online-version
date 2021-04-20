@@ -13,7 +13,7 @@ BASE = "base"
 UNIT_WORKER = "worker"
 UNIT_INFANTRY = "infantry"
 UNIT_CAVALRY ='cavalry'
-UNIT_ARCHERS = "archer"
+UNIT_ARCHERS = "archers"
 MAP_SIZE = 12
 
 class Text:
@@ -113,8 +113,7 @@ class Menu:
         mod = event.mod
         if (key,mod) in self.shortcut:
             exec(self.shortcut[key,mod])
-    #commence veritablement le jeu
-
+    
 class Battle:
     def __init__(self,game):
         self.game = game
@@ -159,7 +158,6 @@ class Battle:
         pygame.image.load("redinfantry.png").convert()]
             #liste des images pertinentes sur ces tuiles/unites
         
-        
     def unit_types_setup(self):
         self.unit_types = []
         self.unit_types.append(UnitType(BASE, 5, 0, 0, 0,(0,0,0),None,None))
@@ -181,8 +179,7 @@ class Battle:
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(5,9)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(8,10)))
-        
-        
+         
     def run(self):
         self.map.draw()
         Battle.running = True
@@ -225,7 +222,7 @@ class Battle:
                         if self.game.turn.action.actionsbuttons != None:
                             for i in range(len(self.game.turn.action.actionsbuttons)):
                                 if self.game.turn.action.actionsbuttons[i].rect.collidepoint(event.__getattribute__('pos')):
-                                    self.game.turn.action.takeaction(self.game.turn.action.available_actions[i],self.game.contextWindow.chosenunit)
+                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosenunit)
                                     self.currentaction = self.game.turn.action.available_actions[i]
                         if self.currentsquare != None:
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
@@ -243,8 +240,6 @@ class Battle:
                                         self.action = False
                                         self.currentaction = None
                                         self.game.turn.action.moveablespaces = []
-                        
-                        
                             
                 if event.type == MOUSEBUTTONUP :
                     for i in range(MAP_SIZE) :
@@ -510,45 +505,43 @@ class Unit:
     def __init__(self, team, unit_type, tile):
         self.team = team
         self.unit_type = unit_type
-        self.life = unit_type.life
+        self.life = unit_type.max_life
         self.tile = tile
         self.actions = unit_type.actions
         tile.unit = self
 
 class UnitType:
-    def __init__(self, name, life, move, range, hits,cost,spawn_types,specialactions):
+    def __init__(self, name, max_life, move, range, hits, cost, spawn_types, special_actions):
         self.name = name
-        self.life = life
+        self.max_life = max_life
         self.move = move
         self.range = range
         self.hits = hits
         self.spawn_types = spawn_types
-        self.specialactions = specialactions
+        self.special_actions = special_actions
         self.actions = []
         if self.move != 0:
             self.actions.append("move")
         if self.hits != 0:
             self.actions.append("attack")
-        if self.specialactions != None:
-            self.actions.append(self.specialactions)
+        if self.special_actions != None:
+            self.actions.append(self.special_actions)
 
 class Turn:
     def __init__(self,game):
-        self.action = Action(game,self)
-        self.currentturn = 0
-        self.action.draw_window(self.currentturn)
-    def change_turn(self):
-        if self.currentturn == 0:
-            self.currentturn = 1
-        else:
-            self.currentturn =0
-        self.action.draw_window(self.currentturn)
-
+        self.action = Action(game, self)
+        self.current_turn = 0
+        self.action.draw_window(self.current_turn)
         
-
+    def change_turn(self):
+        if self.current_turn == 0:
+            self.current_turn = 1
+        else:
+            self.current_turn = 0
+        self.action.draw_window(self.current_turn)
 
 class Action:
-    def __init__(self,game,turn):
+    def __init__(self, game, turn):
         self.game = game
         self.turn = turn
         self.turn_indicator = Text('',pos = (40,20))
@@ -587,13 +580,14 @@ class Action:
         self.available_actions.append('place base') 
         #self.draw_buttons(None)
 
-    def takeaction(self,action,unit):
+    def take_action(self,action,unit):
         if action == 'move':
             self.movselect(unit)
         if action == 'attack':
             self.atkselect(unit)
         if action == 'end turn':
             self.endturn()
+
     def movselect(self,unit):
         self.movrange = unit.unit_type.move
         self.tile = unit.tile
@@ -647,7 +641,6 @@ class Action:
 
     def endturn(self):
         self.turn.change_turn()
-
 
 #class GlobalWindow:
 #    def __init__(self):
