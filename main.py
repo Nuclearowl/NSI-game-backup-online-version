@@ -373,7 +373,7 @@ class Map:
             if i < MAP_SIZE ** 2 - MAP_SIZE :
                 if self.random_gen[i + MAP_SIZE] in necessaryadjacentcolors:
                     necessary = 1
-            if i > MAP_SIZE - 1:
+            if i >= MAP_SIZE :
                 if self.random_gen[i - MAP_SIZE] in necessaryadjacentcolors:
                     necessary = 1
         if necessary == 0:
@@ -572,24 +572,29 @@ class Action:
             self.endturn()
     def movement(self,unit):
         self.movrange = unit.unit_type.move
+        self.tile = unit.tile
         self.x = unit.tile.x
         self.y = unit.tile.y
-        self.moveablespaces = []
-        for i in range (-self.movrange,self.movrange+1):
-            if i> 0:
-                for j in range (self.movrange):
-                    if self.game.map.find_tile(self.x+self.movrange-i-j,self.y+i) not in self.moveablespaces :
-                        self.moveablespaces.append(self.game.map.find_tile(self.x+self.movrange-i-j,self.y+i))
-
-                    if self.game.map.find_tile(self.x+i,self.y+self.movrange-i-j) not in self.moveablespaces :
-                        self.moveablespaces.append(self.game.map.find_tile(self.x + i,self.y + self.movrange - i-j))
-            if i < 0:
-                for j in range (self.movrange):
-                    if self.game.map.find_tile(self.x-self.movrange-i-j,self.y+i) not in self.moveablespaces :
-                        self.moveablespaces.append(self.game.map.find_tile(self.x-self.movrange-i-j,self.y+i))
-
-                    if self.game.map.find_tile(self.x+i,self.y-self.movrange-i-j) not in self.moveablespaces :
-                        self.moveablespaces.append(self.game.map.find_tile(self.x + i,self.y - self.movrange  i-j))
+        self.moveablespaces = [self.tile]
+        self.tempmovspaces = []
+        for i in range (self.movrange):
+            for tile in self.moveablespaces:
+                if tile.x < MAP_SIZE:
+                    if self.game.map.find_tile(tile.x+1,tile.y) not in  self.tempmovspaces:
+                        self.tempmovspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                if tile.x > 0:
+                    if self.game.map.find_tile(tile.x-1,tile.y) not in  self.tempmovspaces:
+                        self.tempmovspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                if tile.y < MAP_SIZE  :
+                    if self.game.map.find_tile(tile.x,tile.y+1) not in  self.tempmovspaces:
+                        self.tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                if tile.y > 0:
+                    if self.game.map.find_tile(tile.x,tile.y-1) not in  self.tempmovspaces:
+                        self.tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+            for tile in self.tempmovspaces:
+                self.moveablespaces.append(tile)
+            self.tempmovspaces.clear()
+        self.moveablespaces.remove(self.tile)
         self.tileselectiondraw(self.moveablespaces)
     def tileselectiondraw(self,tiles):
         for tile in tiles:
