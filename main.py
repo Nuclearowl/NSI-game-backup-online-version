@@ -151,7 +151,7 @@ class Battle:
                          pygame.image.load("swamp.png").convert(),pygame.image.load("boulder.png").convert(),
                          pygame.image.load("snowy mountain.png").convert(),pygame.image.load("mountain.png").convert(),
                          pygame.image.load("lava.png").convert(),pygame.image.load("volcano.png").convert(),
-                         pygame.image.load("water.png").convert(),pygame.image.load("water.png").convert(), ]
+                         pygame.image.load("water.png").convert_alpha(),pygame.image.load("water.png").convert(), ]
         Battle.blueunitimgs = [pygame.image.load("bluebase.png").convert(),pygame.image.load("bluecavalry.png").convert(),
         pygame.image.load("blueinfantry.png").convert()]
         Battle.redunitimgs = [pygame.image.load("redbase.png").convert(),pygame.image.load("redcavalry.png").convert(),
@@ -273,7 +273,7 @@ class Game:
             self.map = Map()
             self.contextWindow = ContextWindow(self)
             self.battle = Battle(self)
-            self.turn = Turn() 
+            self.turn = Turn(self) 
             self.battle.run()
             
 class Map:
@@ -510,8 +510,8 @@ class UnitType:
             self.actions.append(self.specialactions)
 
 class Turn:
-    def __init__(self):
-        self.action = Action(self)
+    def __init__(self,game):
+        self.action = Action(game,self)
         self.currentturn = 0
         self.action.draw_window(self.currentturn)
     def change_turn(self):
@@ -525,7 +525,8 @@ class Turn:
 
 
 class Action:
-    def __init__(self,turn):
+    def __init__(self,game,turn):
+        self.game = game
         self.turn = turn
         self.turn_indicator = Text('',pos = (40,20))
         self.available_actions = []
@@ -558,9 +559,9 @@ class Action:
             self.actionsbuttons[i].draw()
             
     def first_turn(self):
-        self.firstturn = True
+        self.firstturn = False
         self.available_actions.append('place base') 
-        self.draw_buttons(None)
+        #self.draw_buttons(None)
 
     def takeaction(self,action,unit):
         if action == 'move':
@@ -570,10 +571,39 @@ class Action:
         if action == 'end turn':
             self.endturn()
     def movement(self,unit):
-        a = 1
+        self.movrange = unit.unit_type.move
+        self.x = unit.tile.x
+        self.y = unit.tile.y
+        self.moveablespaces = []
+        for i in range (-self.movrange,self.movrange+1):
+            if i> 0:
+                for j in range (self.movrange):
+                    if self.game.map.find_tile(self.x+self.movrange-i-j,self.y+i) not in self.moveablespaces :
+                        self.moveablespaces.append(self.game.map.find_tile(self.x+self.movrange-i-j,self.y+i))
 
+                    if self.game.map.find_tile(self.x+i,self.y+self.movrange-i-j) not in self.moveablespaces :
+                        self.moveablespaces.append(self.game.map.find_tile(self.x + i,self.y + self.movrange - i-j))
+            if i < 0:
+                for j in range (self.movrange):
+                    if self.game.map.find_tile(self.x-self.movrange-i-j,self.y+i) not in self.moveablespaces :
+                        self.moveablespaces.append(self.game.map.find_tile(self.x-self.movrange-i-j,self.y+i))
+
+                    if self.game.map.find_tile(self.x+i,self.y-self.movrange-i-j) not in self.moveablespaces :
+                        self.moveablespaces.append(self.game.map.find_tile(self.x + i,self.y - self.movrange  i-j))
+        self.tileselectiondraw(self.moveablespaces)
+    def tileselectiondraw(self,tiles):
+        for tile in tiles:
+            img = Battle.colorgen[12].copy()
+            alpha = 60
+            img.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
+            rect = img.get_rect()
+            rect.topleft = Game.screen.get_width() / 2 + rect.width * tile.x, rect.height * (tile.y + 1)
+            Game.screen.blit(img, rect)
     def attack(self,unit): 
         a = 1
+
+    def placebase(self):
+        s = 1
 
     def endturn(self):
         self.turn.change_turn()
