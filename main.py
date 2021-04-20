@@ -216,10 +216,13 @@ class Battle:
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
                                     self.currentsquare = (i,j)
                                     break
+                                
                         if self.game.turn.action.actionsbuttons != None:
                             for i in range(len(self.game.turn.action.actionsbuttons)):
                                 if self.game.turn.action.actionsbuttons[i].rect.collidepoint(event.__getattribute__('pos')):
                                     self.game.turn.action.takeaction(self.game.turn.action.available_actions[i],self.game.contextWindow.chosenunit)
+                        if self.currentsquare != None:
+                                    pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
 
                 if event.type == MOUSEBUTTONUP :
                     for i in range(MAP_SIZE) :
@@ -512,6 +515,10 @@ class Turn:
         self.currentturn = 0
         self.action.draw_window(self.currentturn)
     def change_turn(self):
+        if self.currentturn == 0:
+            self.currentturn = 1
+        else:
+            self.currentturn =0
         self.action.draw_window(self.currentturn)
 
         
@@ -526,9 +533,10 @@ class Action:
         self.first_turn()
     
     def draw_window(self,turn):
-        if turn == 0 :
-            self.turn_indicator = Text("blue's turn",pos = (40,20))
+        pygame.draw.rect(Game.screen, Color('gray'), self.turn_indicator.rect )
         if turn == 1 :
+            self.turn_indicator = Text("blue's turn",pos = (40,20))
+        if turn == 0 :
             self.turn_indicator = Text("red's turn",pos = (40,20))
         self.turn_indicator.draw()
     
@@ -559,12 +567,18 @@ class Action:
             self.movement(unit)
         if action == 'attack':
             self.attack(unit)
-
+        if action == 'end turn':
+            self.endturn()
     def movement(self,unit):
         a = 1
 
     def attack(self,unit): 
         a = 1
+
+    def endturn(self):
+        self.turn.change_turn()
+
+
 #class GlobalWindow:
 #    def __init__(self):
 #        a = 1
