@@ -8,6 +8,13 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+ENGLISH = "English"
+FRENCH = "French"
+BASE = "base"
+UNIT_WORKER = "Worker"
+UNIT_INFANTRY = "Infantry"
+UNIT_CAVALRY ='Cavalry'
+UNIT_ARCHERS = "Archers"
 MAP_SIZE = 12
 
 class Text:
@@ -34,11 +41,7 @@ class Text:
 
 class Menu:
     #permet de creer et gerer le jeu et l'ecran
-    def __init__(self, game):
-
-        self.game = game
-        self.w = Game.screen.get_width()
-        self.h = Game.screen.get_height()
+    def __init__(self):
         pygame.display.set_caption('Castillon')
         pygame.display.set_icon(pygame.image.load('grass.png'))
         self.title = Text('Castillon', pos=(0, 20))
@@ -46,11 +49,11 @@ class Menu:
         self.title.fontcolor = Color('blue')
         self.title.set_font()
         self.title.render()
-        self.title.pos = (self.w/2 - self.title.rect.width / 2, 20)
+        self.title.pos = (Game.screen.get_width()/2 - self.title.rect.width / 2, 20)
         self.title.set_font()
         self.title.render()
 
-        self.starter = Text('Start', pos=(20, self.h/2))
+        self.starter = Text('Start', pos=(20, Game.screen.get_height()/2))
         self.starter.fontsize = 100
         self.starter.set_font()
         self.starter.render()
@@ -114,10 +117,21 @@ class Menu:
     #commence veritablement le jeu
 
 class Battle:
-    def __init__(self, game):
+    def __init__(self,game):
         self.game = game
+        self.map = self.game.map
+        self.screen_flip()
+        self.tile_load()
+        self.unit_types_setup()
+        self.team_setup()
 
-        #effets speciaux
+       #variables utiles plus tard
+        self.tilesize = 600/MAP_SIZE
+        self.clicking = True
+        self.currentsquare = None
+        self.nextsquare = (0,0)
+        
+    def screen_flip(self):
         Game.screen.fill(Color('white'))
         pygame.display.flip()
         time.sleep(0.2)
@@ -129,12 +143,9 @@ class Battle:
         time.sleep(0.2)
         Game.screen.fill(Color('gray'))
         time.sleep(0.2)
-        #reverifie la taille de l'ecran pour plus tard
-        self.w = Game.screen.get_width()
-        self.h = Game.screen.get_height()
-        #code pour l'initialization du jeu
-            #liste des tuiles possibles
-        self.colorgen = [pygame.image.load("grass.png").convert(),pygame.image.load("grass.png").convert(),
+
+    def tile_load(self):
+        Battle.colorgen = [pygame.image.load("grass.png").convert(),pygame.image.load("grass.png").convert(),
                          pygame.image.load("grass.png").convert(),pygame.image.load("icelake.png").convert(),
                          pygame.image.load("sand.png").convert(),pygame.image.load("forest.png").convert(),
                          pygame.image.load("swamp.png").convert(),pygame.image.load("boulder.png").convert(),
@@ -142,19 +153,32 @@ class Battle:
                          pygame.image.load("lava.png").convert(),pygame.image.load("volcano.png").convert(),
                          pygame.image.load("water.png").convert(),pygame.image.load("water.png").convert(), ]
             #liste des informations pertinentes sur ces tuiles
-        #variables utiles plus tard
-        self.tilesize = 600/MAP_SIZE
-        self.clicking = True
-        self.tilep = False
-        self.tileselect = 0
-        self.buildings = []
-        self.currentsquare =(0,0)
-        self.nextsquare= (0,0)
-        self.random_gen = []
-
+        
+        
+    def unit_types_setup(self):
+        self.unit_types = []
+        self.unit_types.append(UnitType(BASE, 5, 0, 0, 0,None,None))
+        self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,None,None))
+        self.unit_types.append(UnitType(UNIT_INFANTRY, 2, 1, 1, 1,None,None))
+        self.unit_types.append(UnitType(UNIT_CAVALRY, 2, 3, 1, 1,None,None))
+        self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,None,None))
+    
+    def team_setup(self):
+        self.teams = []
+        self.teams.append(self.game.red)
+        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[0], self.map.find_tile(6,0)))
+        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(6,2)))
+        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(3,1)))
+        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(9,1)))
+        self.teams.append(self.game.blue)
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[0], self.map.find_tile(5,11)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(5,9)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(8,10)))
+        
+        
     def run(self):
-        #self.create_map()
-        self.game.map.draw()
+        self.map.draw()
         Battle.running = True
         while Battle.running:
             #Prend tous les evenements du joueur
@@ -163,7 +187,9 @@ class Battle:
                     #Permet de quitter l'application
                     Battle.running = False
                 if event.type == MOUSEMOTION :
-                        self.game.map.draw()
+                        self.map.draw()
+                        if self.currentsquare != None :
+                            pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                         # for i in range(MAP_SIZE):
                         #     for j in range(1, MAP_SIZE + 1):
                         #         pygame.draw.rect(Game.screen, Color('gray'), Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
@@ -173,21 +199,22 @@ class Battle:
 
                         for i in range(MAP_SIZE):
                             for j in range(1, MAP_SIZE + 1):
-                                if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
-                                    pygame.draw.rect(Game.screen, Color('red'), Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
+                                if Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
                                     break
                 if event.type == MOUSEBUTTONDOWN :
                     self.clicking = True
+                    self.map.draw()
                     for i in range(MAP_SIZE):
                         for j in range(1, MAP_SIZE + 1):
-                            if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
+                            if Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
+                                pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
                                 self.currentsquare = (i,j)
                                 break
                 if event.type == MOUSEBUTTONUP :
                     self.swapped = True
                     for i in range(MAP_SIZE) :
                         for j in range(1, MAP_SIZE+1):
-                            if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
+                            if Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
                                 self.game.contextWindow.set_description(i*MAP_SIZE+j-1)
                                 self.game.contextWindow.draw()
                     self.clicking = False
@@ -196,6 +223,7 @@ class Battle:
                     self.game.contextWindow.draw()
                     self.game.map.draw()
                     self.game.turn.action.draw_window(self.game.turn.currentturn)
+                    pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -206,6 +234,7 @@ class Battle:
                     self.game.contextWindow.draw()
                     self.game.map.draw()
                     self.game.turn.action.draw_window(self.game.turn.currentturn)
+                    pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -222,30 +251,22 @@ class Game:
         self.rect = Rect(0, 0, 1280, 720)
         self.config = RESIZABLE
         Game.screen = pygame.display.set_mode(self.rect.size, self.config)
-        self.menu = Menu(self)
+        self.menu = Menu()
 
     def run(self):
-        if self.menu.run() == "battle":
-            self.battle = Battle(self)
-            self.turn = Turn()                
-            self.red = Team()
-            self.blue = Team() 
+        if self.menu.run() == "battle":               
+            self.red = Team("player1",'red')
+            self.blue = Team("player2",'blue') 
             self.map = Map()
             self.contextWindow = ContextWindow(self)
+            self.battle = Battle(self)
+            self.turn = Turn() 
             self.battle.run()
-
+            
 class Map:
     def __init__(self):
-        self.w = Game.screen.get_width()
         self.random_gen = []
         self.tiles = []
-        self.colorgen = [pygame.image.load("grass.png").convert(), pygame.image.load("grass.png").convert(),
-                         pygame.image.load("grass.png").convert(), pygame.image.load("icelake.png").convert(),
-                         pygame.image.load("sand.png").convert(), pygame.image.load("forest.png").convert(),
-                         pygame.image.load("swamp.png").convert(), pygame.image.load("boulder.png").convert(),
-                         pygame.image.load("snowy mountain.png").convert(), pygame.image.load("mountain.png").convert(),
-                         pygame.image.load("lava.png").convert(), pygame.image.load("volcano.png").convert(),
-                         pygame.image.load("water.png").convert(), pygame.image.load("water.png").convert(), ]
         self.generate_tiles()
 
     def generate_tiles(self):
@@ -310,7 +331,7 @@ class Map:
 
         for i in range(MAP_SIZE):
             for j in range(MAP_SIZE):
-                self.tiles.append(Tile(self.random_gen[MAP_SIZE*i+j], (i, j)))
+                self.tiles.append(Tile(self.random_gen[MAP_SIZE*i + j], i, j))
 
     def tilenextto(self,i,newcolor,illegaladjacentcolors = None,necessaryadjacentcolors = None):
         necessary = 0
@@ -347,17 +368,18 @@ class Map:
         if self.random_gen[i] == newcolor:
             return True
 
+    def find_tile(self, x, y):
+        return self.tiles[MAP_SIZE*x + y]
+    
     def draw(self):
-        for i in range(len(self.tiles)):
-            img = self.colorgen[self.tiles[i].type]
-            rect = img.get_rect()
-            rect.topleft = self.w / 2 + rect.width * self.tiles[i].id[0], rect.height * (self.tiles[i].id[1]+1)
-            Game.screen.blit(img, rect)
+        for i in self.tiles:
+            i.draw()
 
 class Tile:
-    def __init__(self,type,id):
+    def __init__(self, type, x, y):
         self.type = type
-        self.id = id
+        self.x = x
+        self.y = y
         if self.type == 5:
             self.resource_type = "wood:"
             self.resources = str(random.randint(1,3))
@@ -370,6 +392,18 @@ class Tile:
         else:
             self.resource_type = ""
             self.resources = ""
+        self.unit = None
+
+    def draw(self):
+        # Terrain
+        img = Battle.colorgen[self.type]
+        rect = img.get_rect()
+        rect.topleft = Game.screen.get_width() / 2 + rect.width * self.x, rect.height * (self.y + 1)
+        Game.screen.blit(img, rect)
+
+        # Unit?
+        if self.unit:
+            a = 1
 
 class ContextWindow:
     def __init__(self,game):
@@ -412,23 +446,29 @@ class ContextWindow:
         self.resourcename.draw()
         self.resources.draw()
         
-
 class Team:
-    def __init__(self):
+    def __init__(self, name, color):
+        self.name = name
+        self.color = color
         self.units = []
-    def setup_unit(self,unit_type):
-        self.units.append(Unit(unit_type))
-    
 
 class Unit:
-    def __init__(self,unit_type):
-        self.stats = [[2,3,2],[2,3,1],[1,1,3],[1,2,1],['harvest resource','charge',None]]
-        self.health = self.stats[0][unit_type]
-        self.movrange = self.stats[1][unit_type]
-        self.atkrange = self.stats[2][unit_type]
-        self.atkpower = self.stats[3][unit_type]
-        self.specialactions = self.stats[4][unit_type]
-        
+    def __init__(self, team, unit_type, tile):
+        self.team = team
+        self.unit_type = unit_type
+        self.life = unit_type.life
+        self.tile = tile
+        tile.unit = self
+
+class UnitType:
+    def __init__(self, name, life, move, range, hits,cost,spawn_types):
+        self.name = name
+        self.life = life
+        self.move = move
+        self.range = range
+        self.hits = hits
+        self.spawn_types = spawn_types
+
 class Turn:
     def __init__(self):
         self.action = Action()
