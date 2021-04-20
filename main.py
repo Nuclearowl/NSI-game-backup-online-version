@@ -11,7 +11,7 @@ BLUE = (0, 0, 255)
 MAP_SIZE = 12
 
 class Text:
-    #cree une classe permettant de modifier et utuliser du text TOTO
+    #cree une classe permettant de modifier et utuliser du text 
     def __init__(self, text, pos,**options):
         self.text = text
         self.pos = pos
@@ -142,19 +142,12 @@ class Battle:
                          pygame.image.load("lava.png").convert(),pygame.image.load("volcano.png").convert(),
                          pygame.image.load("water.png").convert(),pygame.image.load("water.png").convert(), ]
             #liste des informations pertinentes sur ces tuiles
-       
-        self.blueunits = {}
-        self.redunits = {}
-        self.turn = "blue"
-        self.info = Text('', pos=(40, 80))
-        self.description = Text('', pos=(40, 152))
         #variables utiles plus tard
         self.tilesize = 600/MAP_SIZE
         self.clicking = True
         self.tilep = False
         self.tileselect = 0
         self.buildings = []
-        self.swapped = False
         self.currentsquare =(0,0)
         self.nextsquare= (0,0)
         self.random_gen = []
@@ -170,8 +163,6 @@ class Battle:
                     #Permet de quitter l'application
                     Battle.running = False
                 if event.type == MOUSEMOTION :
-                    if self.clicking == False :
-
                         self.game.map.draw()
                         # for i in range(MAP_SIZE):
                         #     for j in range(1, MAP_SIZE + 1):
@@ -184,14 +175,7 @@ class Battle:
                             for j in range(1, MAP_SIZE + 1):
                                 if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize), 1)
-                                    self.game.contextWindow.set_description(i*MAP_SIZE+j-1)
                                     break
-                    elif self.swapped :
-                        for i in range(MAP_SIZE):
-                            for j in range(1, MAP_SIZE + 1):
-                                if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
-                                    self.nextsquare = (i,j)
-                        self.Movement(self.currentsquare,self.nextsquare)
                 if event.type == MOUSEBUTTONDOWN :
                     self.clicking = True
                     for i in range(MAP_SIZE):
@@ -204,13 +188,14 @@ class Battle:
                     for i in range(MAP_SIZE) :
                         for j in range(1, MAP_SIZE+1):
                             if Rect((self.w / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
+                                self.game.contextWindow.set_description(i*MAP_SIZE+j-1)
                                 self.game.contextWindow.draw()
                     self.clicking = False
                 if event.type == WINDOWMAXIMIZED:
                     Game.screen.fill(Color('gray'))
-                    self.info.draw()
-                    self.description.draw()
+                    self.game.contextWindow.draw()
                     self.game.map.draw()
+                    self.game.turn.action.draw_window(self.game.turn.currentturn)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -218,9 +203,9 @@ class Battle:
                     #        Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect)
                 if event.type == WINDOWRESIZED:
                     Game.screen.fill(Color('gray'))
-                    self.info.draw()
-                    self.description.draw()
+                    self.game.contextWindow.draw()
                     self.game.map.draw()
+                    self.game.turn.action.draw_window(self.game.turn.currentturn)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -229,19 +214,6 @@ class Battle:
             pygame.display.update()
         pygame.quit()
 
-    def Movement(self,originalsquare,nextsquare):
-        if originalsquare != nextsquare:
-            rect = self.game.map.colorgen[self.game.map.tiles[nextsquare[0]* MAP_SIZE + nextsquare[1] - 1].type].get_rect()
-            rect.topleft = self.w / 2 + self.tilesize * originalsquare[0], self.tilesize * originalsquare[1]
-            Game.screen.blit(self.game.map.colorgen[self.game.map.tiles[originalsquare[0] * MAP_SIZE + originalsquare[1] - 1].type], rect)
-            rect = self.game.map.colorgen[self.game.map.tiles[originalsquare[0] * MAP_SIZE + originalsquare[1] - 1].type].get_rect()
-            rect.topleft = self.w / 2 + self.tilesize * nextsquare[0], self.tilesize * nextsquare[1]
-            Game.screen.blit(self.game.map.colorgen[self.game.map.tiles[nextsquare[0] * MAP_SIZE + nextsquare[1] - 1].type], rect)
-            a = self.game.map.tiles[originalsquare[0] * MAP_SIZE + originalsquare[1] - 1].type
-            self.game.map.tiles[originalsquare[0] * MAP_SIZE + originalsquare[1] - 1].type = self.game.map.tiles[nextsquare[0]* MAP_SIZE + nextsquare[1] - 1].type
-            self.game.map.tiles[nextsquare[0] * MAP_SIZE + nextsquare[1] - 1].type = a
-            self.swapped = False
-            self.game.map.draw()
 
 
 class Game:
@@ -255,6 +227,9 @@ class Game:
     def run(self):
         if self.menu.run() == "battle":
             self.battle = Battle(self)
+            self.turn = Turn()                
+            self.red = Team()
+            self.blue = Team() 
             self.map = Map()
             self.contextWindow = ContextWindow(self)
             self.battle.run()
@@ -383,7 +358,18 @@ class Tile:
     def __init__(self,type,id):
         self.type = type
         self.id = id
-
+        if self.type == 5:
+            self.resource_type = "wood:"
+            self.resources = str(random.randint(1,3))
+        elif self.type == 7:
+            self.resource_type = "rock:"
+            self.resources = str(random.randint(1,2))
+        elif self.type == 9:
+            self.resource_type = "metal:"
+            self.resources = "1"
+        else:
+            self.resource_type = ""
+            self.resources = ""
 
 class ContextWindow:
     def __init__(self,game):
@@ -394,39 +380,77 @@ class ContextWindow:
         self.clickabledescription = 0
         self.info = Text("", pos=(40, 152))
         self.description = Text("", pos=(40, 152))
+        self.resourcename = Text("", pos=(40, 188))
+        self.resources = Text("", pos=(40, 188))
 
     def set_description(self, tilenb):
         self.clickableinfo = self.title_entries[self.game.map.tiles[tilenb].type]
         self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
-    
+        self.resourcetext = self.game.map.tiles[tilenb].resource_type
+        self.resourcenb = self.game.map.tiles[tilenb].resources
+        
     def draw(self):
         pygame.draw.rect(Game.screen, Color('gray'), self.info.rect)
-        self.info = Text(self.clickableinfo, pos=(40,80))
-        self.info.draw()
         pygame.draw.rect(Game.screen, Color('gray'), self.description.rect, )
-        self.description = Text(self.clickabledescription, pos=(40, 152))
+        pygame.draw.rect(Game.screen, Color('gray'), self.resourcename.rect, )
+        pygame.draw.rect(Game.screen, Color('gray'), self.resources.rect, )
+        self.info = Text(self.clickableinfo, pos=(40,120))
+        self.description = Text(self.clickabledescription, pos=(40, 192))
+        self.resourcename = Text(self.resourcetext, pos =(40,228)) 
+        self.resources = Text(self.resourcenb, pos =(50+self.resourcename.rect.width,228))
         self.description.fontsize = 36
         self.description.set_font()
         self.description.render()
+        self.resourcename.fontsize = 36
+        self.resourcename.set_font()
+        self.resourcename.render()
+        self.resources.fontsize = 36
+        self.resources.set_font()
+        self.resources.render()
         self.description.draw()
+        self.info.draw()
+        self.resourcename.draw()
+        self.resources.draw()
+        
+
 class Team:
     def __init__(self):
-        a = 1
-
-    def setup_units(self):
-        a = 1
+        self.units = []
+    def setup_unit(self,unit_type):
+        self.units.append(Unit(unit_type))
+    
 
 class Unit:
-    def __init__(self):
-        a=1
-
+    def __init__(self,unit_type):
+        self.stats = [[2,3,2],[2,3,1],[1,1,3],[1,2,1],['harvest resource','charge',None]]
+        self.health = self.stats[0][unit_type]
+        self.movrange = self.stats[1][unit_type]
+        self.atkrange = self.stats[2][unit_type]
+        self.atkpower = self.stats[3][unit_type]
+        self.specialactions = self.stats[4][unit_type]
+        
 class Turn:
     def __init__(self):
-        a = 1
+        self.action = Action()
+        self.currentturn = 0
+        self.action.draw_window(self.currentturn)
+    def change_turn(self):
+        self.action.draw_window(self.currentturn)
+
+        
+
 
 class Action:
     def __init__(self):
-        a = 1
+        self.turn_indicator = Text('',pos = (40,20))
+        self.available_actions = ['place base']
+    
+    def draw_window(self,turn):
+        if turn == 0 :
+            self.turn_indicator = Text("blue's turn",pos = (40,20))
+        if turn == 1 :
+            self.turn_indicator = Text("red's turn",pos = (40,20))
+        self.turn_indicator.draw()
 
 #class GlobalWindow:
 #    def __init__(self):
