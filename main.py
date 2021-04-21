@@ -629,6 +629,7 @@ class Action:
     def movement(self,new_tile,old_tile):
         new_tile.unit = old_tile.unit
         old_tile.unit = None
+        new_tile.unit.tile = new_tile
         self.moveablespaces = []
         self.game.contextWindow.set_description(new_tile.x*MAP_SIZE+new_tile.y)
         self.game.contextWindow.draw()
