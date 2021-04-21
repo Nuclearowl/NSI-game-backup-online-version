@@ -9,21 +9,26 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-BASE = "base"
-UNIT_WORKER = "worker"
-UNIT_INFANTRY = "infantry"
-UNIT_CAVALRY ='cavalry'
-UNIT_ARCHERS = "archers"
+UNIT_BASE = "Base"
+UNIT_WORKER = "Worker"
+UNIT_INFANTRY = "Infantry"
+UNIT_CAVALRY ='Cavalry'
+UNIT_ARCHER = "Archer"
+ACTION_END_TURN = "End Turn"
+ACTION_ATTACK = "Attack"
+ACTION_MOVE = "Move"
+ACTION_CHARGE = "Charge"
+ACTION_HARVEST = "Harvest"
 MAP_SIZE = 12
 
 class Text:
     #cree une classe permettant de modifier et utuliser du text 
-    def __init__(self, text, pos,**options):
+    def __init__(self, text, x, y, font = 60, color = "black"):
         self.text = text
-        self.pos = pos
+        self.pos = (x, y)
         self.fontname = None
-        self.fontsize = 72
-        self.fontcolor = Color("black")
+        self.fontsize = font
+        self.fontcolor = Color(color)
         self.set_font()
         self.render()
     def set_font(self):
@@ -34,8 +39,11 @@ class Text:
         self.img = self.font.render(self.text, True, self.fontcolor)
         self.rect = self.img.get_rect()
         self.rect.topleft = self.pos
+    
+    def erase(self):
+        pygame.draw.rect(Game.screen, Color('gray'), self.rect)
+
     def draw(self):
-        #affiche le texte
         Game.screen.blit(self.img, self.rect)
 
 class Menu:
@@ -43,20 +51,12 @@ class Menu:
     def __init__(self):
         pygame.display.set_caption('Castillon')
         pygame.display.set_icon(pygame.image.load('grass.png'))
-        self.title = Text('Castillon', pos=(0, 20))
-        self.title.fontsize = 400
-        self.title.fontcolor = Color('blue')
-        self.title.set_font()
-        self.title.render()
+        self.title = Text('Castillon', 0, 20, 400, 'blue')
         self.title.pos = (Game.screen.get_width()/2 - self.title.rect.width / 2, 20)
         self.title.set_font()
         self.title.render()
-
-        self.starter = Text('Start', pos=(20, Game.screen.get_height()/2))
-        self.starter.fontsize = 100
-        self.starter.set_font()
-        self.starter.render()
-
+        self.starter = Text('Start', 20, Game.screen.get_height()/2, 100)
+        
         Menu.running = True
         self.shortcut ={  }
 
@@ -160,21 +160,21 @@ class Battle:
         
     def unit_types_setup(self):
         self.unit_types = []
-        self.unit_types.append(UnitType(BASE, 5, 0, 0, 0,(0,0,0),None,None))
+        self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,None))
         self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 1,(0,1,2),None,None))
-        self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,(1,1,0),None,'harvest'))
-        self.unit_types.append(UnitType(UNIT_CAVALRY, 3, 3, 1, 1,(1,1,2),None,'charge'))
-        self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,(1,1,1),None,None))
+        self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,(1,1,0),None,ACTION_HARVEST))
+        self.unit_types.append(UnitType(UNIT_CAVALRY, 3, 3, 1, 1,(1,1,2),None,ACTION_CHARGE))
+        self.unit_types.append(UnitType(UNIT_ARCHER, 2, 1, 3, 1,(1,1,1),None,None))
     
     def team_setup(self):
         self.teams = []
-        self.teams.append(self.game.red)
+        self.teams.append(Team("Red",'red'))
         self.teams[0].units.append(Unit(self.teams[0], self.unit_types[0], self.map.find_tile(6,0)))
         self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(6,2)))
         self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(3,1)))
         self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(9,1)))
         self.teams[0].units.append(Unit(self.teams[0], self.unit_types[3], self.map.find_tile(7,2)))
-        self.teams.append(self.game.blue)
+        self.teams.append(Team("Blue",'blue'))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[0], self.map.find_tile(5,11)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(5,9)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
@@ -219,10 +219,10 @@ class Battle:
                                     self.game.contextWindow.draw()
                                     break
                                 
-                        if self.game.turn.action.actionsbuttons != None:
-                            for i in range(len(self.game.turn.action.actionsbuttons)):
-                                if self.game.turn.action.actionsbuttons[i].rect.collidepoint(event.__getattribute__('pos')):
-                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosenunit)
+                        if self.game.turn.action.action_buttons != None:
+                            for i in range(len(self.game.turn.action.action_buttons)):
+                                if self.game.turn.action.action_buttons[i].rect.collidepoint(event.__getattribute__('pos')):
+                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosen_unit)
                                     self.currentaction = self.game.turn.action.available_actions[i]
                         if self.currentsquare != None:
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
@@ -232,9 +232,9 @@ class Battle:
                             for j in range(1, MAP_SIZE + 1):
                                 if Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
                                     if self.game.map.find_tile(i,j-1) in self.game.turn.action.moveablespaces:
-                                        if self.currentaction == 'move':
+                                        if self.currentaction == ACTION_MOVE:
                                             self.game.turn.action.movement(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)
-                                        if self.currentaction == 'attack':
+                                        if self.currentaction == ACTION_ATTACK:
                                             a = 1
                                     else:
                                         self.action = False
@@ -252,7 +252,7 @@ class Battle:
                     self.game.contextWindow.draw()
                     self.game.map.draw()
                     self.game.turn.action.tileselectiondraw(self.game.turn.action.moveablespaces)
-                    self.game.turn.action.draw_window(self.game.turn.currentturn)
+                    self.game.turn.action.draw_window(self.game.turn.current_team)
                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
@@ -264,7 +264,7 @@ class Battle:
                     self.game.contextWindow.draw()
                     self.game.map.draw()
                     self.game.turn.action.tileselectiondraw(self.game.turn.action.moveablespaces)
-                    self.game.turn.action.draw_window(self.game.turn.currentturn)
+                    self.game.turn.action.draw_window(self.game.turn.current_team)
                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
@@ -286,8 +286,6 @@ class Game:
 
     def run(self):
         if self.menu.run() == "battle":               
-            self.red = Team("red",'red')
-            self.blue = Team("blue",'blue') 
             self.map = Map()
             self.contextWindow = ContextWindow(self)
             self.battle = Battle(self)
@@ -412,13 +410,13 @@ class Tile:
         self.x = x
         self.y = y
         if self.type == 5:
-            self.resource_type = "wood:"
+            self.resource_type = "Wood:"
             self.resources = str(random.randint(1,3))
         elif self.type == 7:
-            self.resource_type = "rock:"
+            self.resource_type = "Rock:"
             self.resources = str(random.randint(1,2))
         elif self.type == 9:
-            self.resource_type = "metal:"
+            self.resource_type = "Metal:"
             self.resources = "1"
         else:
             self.resource_type = ""
@@ -434,10 +432,7 @@ class Tile:
 
         # Unit?
         if self.unit:
-            if self.unit.team.name == 'red':
-                img = pygame.image.load('red'+str(self.unit.unit_type.name)+'.png')
-            else:
-                img = pygame.image.load('blue'+str(self.unit.unit_type.name)+'.png')
+            img = pygame.image.load(self.unit.team.color + str(self.unit.unit_type.name)+'.png')
             rect = img.get_rect()
             rect.topleft = Game.screen.get_width() / 2 + rect.width * self.x, rect.height * (self.y + 1)
             img.set_colorkey(Color('black'))
@@ -447,17 +442,18 @@ class Tile:
 class ContextWindow:
     def __init__(self,game):
         self.game = game
-        self.title_entries = ["grass","grass","grass","ice","sand","forest","swamp","boulder","snowy mountain","mountain","lava","volcano","water",'water']
-        self.textentries = ["a good place to settle","a good place to settle","a good place to settle","warmer clothes are needed to survive here","nothing usefull here","a source of wood","a good place to hide","ideal for a quarry","cold and desolate","difficult to traverse","hot and dangerous","an active hasard","a boat is needed to traverse this",'a boat is needed to traverse this']
+        self.title_entries = ["Grass","Grass","Grass","Icy Lake","Sand","Forest","Swamp","Boulder","Snowy Mountain","Mountain","Lava","Volcano","Water",'Water']
+        self.textentries = ["A good place to settle","A good place to settle","A good place to settle","Warmer clothes are needed to survive here","Nothing useful here","A source of wood","A good place to hide","Ideal for a quarry","Cold and desolate","Difficult to traverse","Hot and dangerous","An active hasard","A boat is needed to traverse this",'A boat is needed to traverse this']
         self.clickableinfo = 0
         self.clickabledescription = 0
-        self.info = Text("", pos=(40, 152))
-        self.description = Text("", pos=(40, 152))
-        self.resourcename = Text("", pos=(40, 188))
-        self.resources = Text("", pos=(40, 188))
+        self.info = Text("", 40, 152)
+        self.description = Text("", 40, 152)
+        self.resourcename = Text("", 40, 188)
+        self.resources = Text("", 40, 188)
         self.actions = []
-        self.chosenunit = None
-        
+        self.chosen_unit = None
+        self.unit_text = Text("", 40, 152)
+        self.unit_life = Text("", 40, 152)
 
     def set_description(self, tilenb):
         self.actions.clear()
@@ -465,33 +461,37 @@ class ContextWindow:
         self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
         self.resourcetext = self.game.map.tiles[tilenb].resource_type
         self.resourcenb = self.game.map.tiles[tilenb].resources
-        if self.game.map.tiles[tilenb].unit != None:
-            self.chosenunit = self.game.map.tiles[tilenb].unit
-            for action in self.chosenunit.actions:
+        self.chosen_unit = self.game.map.tiles[tilenb].unit
+        # This unit can play this turn
+        if self.chosen_unit != None and self.chosen_unit.team == self.game.turn.current_team:
+            for action in self.chosen_unit.actions:
                 self.actions.append(action)
 
     def draw(self):
-        pygame.draw.rect(Game.screen, Color('gray'), self.info.rect)
-        pygame.draw.rect(Game.screen, Color('gray'), self.description.rect )
-        pygame.draw.rect(Game.screen, Color('gray'), self.resourcename.rect )
-        pygame.draw.rect(Game.screen, Color('gray'), self.resources.rect )
-        self.info = Text(self.clickableinfo, pos=(40,120))
-        self.description = Text(self.clickabledescription, pos=(40, 192))
-        self.resourcename = Text(self.resourcetext, pos =(40,228)) 
-        self.resources = Text(self.resourcenb, pos =(50+self.resourcename.rect.width,228))
-        self.description.fontsize = 36
-        self.description.set_font()
-        self.description.render()
-        self.resourcename.fontsize = 36
-        self.resourcename.set_font()
-        self.resourcename.render()
-        self.resources.fontsize = 36
-        self.resources.set_font()
-        self.resources.render()
-        self.description.draw()
+        # Terrain
+        self.info.erase()
+        self.info = Text("Terrain = " +  self.clickableinfo, 40, 120)
         self.info.draw()
+        self.description.erase()
+        self.description = Text(self.clickabledescription, 40, 192, 40)
+        self.description.draw()
+        self.resourcename.erase()
+        self.resourcename = Text(self.resourcetext, 40, 228, 40) 
         self.resourcename.draw()
+        self.resources.erase()
+        self.resources = Text(self.resourcenb, 50+self.resourcename.rect.width, 228, 40)
         self.resources.draw()
+
+        # Unit
+        self.unit_text.erase()
+        self.unit_life.erase()
+        if self.chosen_unit != None:
+            self.unit_text = Text("Unit = " + self.chosen_unit.team.name + "'s " + self.chosen_unit.unit_type.name, 40, 270, 60, self.chosen_unit.team.color)
+            self.unit_text.draw()
+            self.unit_life = Text("Life = " + str(self.chosen_unit.life), 40, 330, 40)
+            self.unit_life.draw()
+
+        # Actions
         self.game.turn.action.draw_buttons(self.actions)
 
         
@@ -521,59 +521,60 @@ class UnitType:
         self.special_actions = special_actions
         self.actions = []
         if self.move != 0:
-            self.actions.append("move")
+            self.actions.append(ACTION_MOVE)
         if self.hits != 0:
-            self.actions.append("attack")
+            self.actions.append(ACTION_ATTACK)
         if self.special_actions != None:
             self.actions.append(self.special_actions)
 
 class Turn:
-    def __init__(self,game):
+    def __init__(self, game):
+        self.game = game
         self.action = Action(game, self)
-        self.current_turn = 0
-        self.action.draw_window(self.current_turn)
+        self.current_team = game.battle.teams[0]
+        self.action.draw_window(self.current_team)
         
     def change_turn(self):
-        if self.current_turn == 0:
-            self.current_turn = 1
+        if self.current_team == self.game.battle.teams[0]:
+            self.current_team = self.game.battle.teams[1]
         else:
-            self.current_turn = 0
-        self.action.draw_window(self.current_turn)
+            self.current_team = self.game.battle.teams[0]
+        self.action.draw_window(self.current_team)
 
 class Action:
     def __init__(self, game, turn):
         self.game = game
         self.turn = turn
-        self.turn_indicator = Text('',pos = (40,20))
+        self.turn_indicator = Text('', 40, 20)
         self.available_actions = []
-        self.actionsbuttons = []    
+        self.action_buttons = []    
         self.first_turn()
         self.moveablespaces = []
     
-    def draw_window(self,turn):
+    def draw_window(self, team):
         pygame.draw.rect(Game.screen, Color('gray'), self.turn_indicator.rect )
-        if turn == 1 :
-            self.turn_indicator = Text("blue's turn",pos = (40,20))
-        if turn == 0 :
-            self.turn_indicator = Text("red's turn",pos = (40,20))
+        self.turn_indicator = Text(team.name + "'s turn", 40, 20, 80)
+        self.turn_indicator.fontcolor = Color(team.color)
+        self.turn_indicator.set_font()
+        self.turn_indicator.render()
         self.turn_indicator.draw()
     
-    def draw_buttons(self,actions):
+    def draw_buttons(self, actions):
         self.actions = actions
         
         if self.firstturn == False:
             self.available_actions.clear()
             for i in range (len(self.actions)):
                 self.available_actions.append(self.actions[i])
-            self.available_actions.append('end turn')
-        if self.actionsbuttons != None:
-            for actionbutton in self.actionsbuttons:
-                pygame.draw.rect(Game.screen, Color('gray'), actionbutton.rect )
-        self.actionsbuttons.clear()
+            self.available_actions.append(ACTION_END_TURN)
+        if self.action_buttons != None:
+            for actionbutton in self.action_buttons:
+                actionbutton.erase()
+        self.action_buttons.clear()
         for i in range (len(self.available_actions)):
-            self.actionsbuttons.append(Text(self.available_actions[i], pos =(40,264+56*i)) )
-            pygame.draw.rect(Game.screen, Color('light blue'), self.actionsbuttons[i].rect )
-            self.actionsbuttons[i].draw()
+            self.action_buttons.append(Text(self.available_actions[i], 40, 404+56*i))
+            pygame.draw.rect(Game.screen, Color('light blue'), self.action_buttons[i].rect )
+            self.action_buttons[i].draw()
             
     def first_turn(self):
         self.firstturn = False
@@ -581,11 +582,11 @@ class Action:
         #self.draw_buttons(None)
 
     def take_action(self,action,unit):
-        if action == 'move':
+        if action == ACTION_MOVE:
             self.movselect(unit)
-        if action == 'attack':
+        if action == ACTION_ATTACK:
             self.atkselect(unit)
-        if action == 'end turn':
+        if action == ACTION_END_TURN:
             self.endturn()
 
     def movselect(self,unit):
