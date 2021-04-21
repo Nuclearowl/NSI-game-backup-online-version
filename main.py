@@ -237,7 +237,7 @@ class Battle:
                                         if self.currentaction == 'move':
                                             self.game.turn.action.movement(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)
                                         if self.currentaction == 'attack':
-                                            self.game.turn.action.attack(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)             
+                                            self.game.turn.action.attack(self.game.map.find_tile(i,j-1),self.game.turn.action.tile.unit.unit_type.hits)             
                                     else:
                                         self.action = False
                                         self.currentaction = None
@@ -513,7 +513,7 @@ class Unit:
         tile.unit = self
     def die(self):
         self.tile.unit = None
-        self.team.remove(self)
+        self.team.units.remove(self)
 
 class UnitType:
     def __init__(self, name, max_life, move, range, hits, cost, spawn_types, special_actions):
@@ -664,7 +664,7 @@ class Action:
         self.game.map.draw()
 
     def attack(self,attacked_tile,hits):
-        attacked_tile.unit.life -= hits
+        attacked_tile.unit.life = attacked_tile.unit.life - hits
         if  attacked_tile.unit.life <= 0:
             attacked_tile.unit.die()
         self.actionablespaces = []
