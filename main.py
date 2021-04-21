@@ -648,8 +648,9 @@ class Action:
             tempattackspaces.clear()
         tempattackspaces2.remove(self.tile)
         for tile in tempattackspaces2:
-            if tile.unit.team != unit.team:
-                self.actionablespaces.append(tile)
+            if tile.unit != None:
+                if tile.unit.team != unit.team:
+                    self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
 
