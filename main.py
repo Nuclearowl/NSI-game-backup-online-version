@@ -13,7 +13,7 @@ UNIT_BASE = "Base"
 UNIT_WORKER = "Worker"
 UNIT_INFANTRY = "Infantry"
 UNIT_CAVALRY ='Cavalry'
-UNIT_ARCHER = "Archer"
+UNIT_ARCHERS = "Archers"
 ACTION_END_TURN = "End Turn"
 ACTION_ATTACK = "Attack"
 ACTION_MOVE = "Move"
@@ -164,7 +164,7 @@ class Battle:
         self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 1,(0,1,2),None,None))
         self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,(1,1,0),None,ACTION_HARVEST))
         self.unit_types.append(UnitType(UNIT_CAVALRY, 3, 3, 1, 1,(1,1,2),None,ACTION_CHARGE))
-        self.unit_types.append(UnitType(UNIT_ARCHER, 2, 1, 3, 1,(1,1,1),None,None))
+        self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,(1,1,1),None,None))
     
     def team_setup(self):
         self.teams = []
@@ -180,7 +180,7 @@ class Battle:
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(8,10)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[2], self.map.find_tile(6,10)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[3], self.map.find_tile(9,10)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[4], self.map.find_tile(9,10)))
          
     def run(self):
         self.map.draw()
