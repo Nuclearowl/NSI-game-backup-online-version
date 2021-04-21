@@ -179,6 +179,8 @@ class Battle:
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(5,9)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
         self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(8,10)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[2], self.map.find_tile(6,10)))
+        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[4], self.map.find_tile(9,10)))
          
     def run(self):
         self.map.draw()
@@ -191,7 +193,7 @@ class Battle:
                     Battle.running = False
                 if event.type == MOUSEMOTION :
                         self.map.draw()
-                        self.game.turn.action.tileselectiondraw(self.game.turn.action.moveablespaces)
+                        self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
                         if self.currentsquare != None :
                             pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                         # for i in range(MAP_SIZE):
@@ -231,15 +233,15 @@ class Battle:
                         for i in range(MAP_SIZE):
                             for j in range(1, MAP_SIZE + 1):
                                 if Rect((Game.screen.get_width() / 2) + self.tilesize * i, self.tilesize * j, self.tilesize, self.tilesize).collidepoint(event.__getattribute__('pos')):
-                                    if self.game.map.find_tile(i,j-1) in self.game.turn.action.moveablespaces:
+                                    if self.game.map.find_tile(i,j-1) in self.game.turn.action.actionablespaces:
                                         if self.currentaction == 'move':
                                             self.game.turn.action.movement(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)
                                         if self.currentaction == 'attack':
-                                            a = 1
+                                            self.game.turn.action.attack(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)             
                                     else:
                                         self.action = False
                                         self.currentaction = None
-                                        self.game.turn.action.moveablespaces = []
+                                        self.game.turn.action.actionablespaces = []
                             
                 if event.type == MOUSEBUTTONUP :
                     for i in range(MAP_SIZE) :
@@ -251,7 +253,7 @@ class Battle:
                     Game.screen.fill(Color('gray'))
                     self.game.contextWindow.draw()
                     self.game.map.draw()
-                    self.game.turn.action.tileselectiondraw(self.game.turn.action.moveablespaces)
+                    self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
                     self.game.turn.action.draw_window(self.game.turn.currentturn)
                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
@@ -263,7 +265,7 @@ class Battle:
                     Game.screen.fill(Color('gray'))
                     self.game.contextWindow.draw()
                     self.game.map.draw()
-                    self.game.turn.action.tileselectiondraw(self.game.turn.action.moveablespaces)
+                    self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
                     self.game.turn.action.draw_window(self.game.turn.currentturn)
                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
@@ -509,6 +511,9 @@ class Unit:
         self.tile = tile
         self.actions = unit_type.actions
         tile.unit = self
+    def die(self):
+        self.tile.unit = None
+        self.team.remove(self)
 
 class UnitType:
     def __init__(self, name, max_life, move, range, hits, cost, spawn_types, special_actions):
@@ -548,7 +553,7 @@ class Action:
         self.available_actions = []
         self.actionsbuttons = []    
         self.first_turn()
-        self.moveablespaces = []
+        self.actionablespaces = []
     
     def draw_window(self,turn):
         pygame.draw.rect(Game.screen, Color('gray'), self.turn_indicator.rect )
@@ -593,28 +598,79 @@ class Action:
         self.tile = unit.tile
         self.x = unit.tile.x
         self.y = unit.tile.y
-        self.moveablespaces = [self.tile]
-        self.tempmovspaces = []
+        self.actionablespaces = [self.tile]
+        tempmovspaces = []
         for i in range (self.movrange):
-            for tile in self.moveablespaces:
+            for tile in self.actionablespaces:
                 if tile.x < MAP_SIZE:
-                    if self.game.map.find_tile(tile.x+1,tile.y) not in  self.tempmovspaces:
-                        self.tempmovspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                    if self.game.map.find_tile(tile.x+1,tile.y) not in  tempmovspaces:
+                       tempmovspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
                 if tile.x > 0:
-                    if self.game.map.find_tile(tile.x-1,tile.y) not in  self.tempmovspaces:
-                        self.tempmovspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                    if self.game.map.find_tile(tile.x-1,tile.y) not in  tempmovspaces:
+                        tempmovspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
                 if tile.y < MAP_SIZE  :
-                    if self.game.map.find_tile(tile.x,tile.y+1) not in  self.tempmovspaces:
-                        self.tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                    if self.game.map.find_tile(tile.x,tile.y+1) not in  tempmovspaces:
+                        tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
                 if tile.y > 0:
-                    if self.game.map.find_tile(tile.x,tile.y-1) not in  self.tempmovspaces:
-                        self.tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
-            for tile in self.tempmovspaces:
-                self.moveablespaces.append(tile)
-            self.tempmovspaces.clear()
-        self.moveablespaces.remove(self.tile)
-        self.tileselectiondraw(self.moveablespaces)
+                    if self.game.map.find_tile(tile.x,tile.y-1) not in  tempmovspaces:
+                        tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+            for tile in tempmovspaces:
+                self.actionablespaces.append(tile)
+            tempmovspaces.clear()
+        self.actionablespaces.remove(self.tile)
+        self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
+    
+    def atkselect(self,unit): 
+        self.atkrange = unit.unit_type.move
+        self.tile = unit.tile
+        self.x = unit.tile.x
+        self.y = unit.tile.y
+        self.actionablespaces = []
+        tempattackspaces = []
+        tempattackspaces2 = [self.tile]
+        for i in range (self.atkrange):
+            for tile in tempattackspaces2:
+                if tile.x < MAP_SIZE:
+                    if self.game.map.find_tile(tile.x+1,tile.y) not in  tempattackspaces:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                if tile.x > 0:
+                    if self.game.map.find_tile(tile.x-1,tile.y) not in  tempattackspaces:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                if tile.y < MAP_SIZE  :
+                    if self.game.map.find_tile(tile.x,tile.y+1) not in  tempattackspaces:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                if tile.y > 0:
+                    if self.game.map.find_tile(tile.x,tile.y-1) not in  tempattackspaces:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+            for tile in tempattackspaces:
+                tempattackspaces2.append(tile)
+            tempattackspaces.clear()
+        tempattackspaces2.remove(self.tile)
+        for tile in tempattackspaces2:
+            if tile.unit.team != unit.team:
+                self.actionablespaces.append(tile)
+        self.tileselectiondraw(self.actionablespaces)
+        self.game.battle.action = True
+
+    def movement(self,new_tile,old_tile):
+        new_tile.unit = old_tile.unit
+        old_tile.unit = None
+        new_tile.unit.tile = new_tile
+        self.actionablespaces = []
+        self.game.contextWindow.set_description(new_tile.x*MAP_SIZE+new_tile.y)
+        self.game.contextWindow.draw()
+        self.game.map.draw()
+
+    def attack(self,attacked_tile,hits):
+        attacked_tile.unit.life -= hits
+        if  attacked_tile.unit.life <= 0:
+            attacked_tile.unit.die()
+        self.actionablespaces = []
+
+    def placebase(self):
+        s = 1
+
     def tileselectiondraw(self,tiles):
         for tile in tiles:
             img = Battle.colorgen[12].copy()
@@ -623,23 +679,6 @@ class Action:
             rect = img.get_rect()
             rect.topleft = Game.screen.get_width() / 2 + rect.width * tile.x, rect.height * (tile.y + 1)
             Game.screen.blit(img, rect)
-    def atkselect(self,unit): 
-        a = 1
-
-    def movement(self,new_tile,old_tile):
-        new_tile.unit = old_tile.unit
-        old_tile.unit = None
-        new_tile.unit.tile = new_tile
-        self.moveablespaces = []
-        self.game.contextWindow.set_description(new_tile.x*MAP_SIZE+new_tile.y)
-        self.game.contextWindow.draw()
-        self.game.map.draw()
-
-    def attack(self):
-        a=1
-    def placebase(self):
-        s = 1
-
     def endturn(self):
         self.turn.change_turn()
 
