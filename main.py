@@ -19,6 +19,11 @@ ACTION_ATTACK = "Attack"
 ACTION_MOVE = "Move"
 ACTION_CHARGE = "Charge"
 ACTION_HARVEST = "Harvest"
+ACTION_PLACE_BASE = 'Place Base'
+ACTION_SPAWN_WORKERS = 'Spawn Worker'
+ACTION_SPAWN_INFANTRY = 'Spawn Infantry'
+ACTION_SPAWN_CAVALRY = 'Spawn Cavalry'
+ACTION_SPAWN_ARCHERS = 'Spawn Archers'
 MAP_SIZE = 12
 
 class Text:
@@ -160,7 +165,7 @@ class Battle:
         
     def unit_types_setup(self):
         self.unit_types = []
-        self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,None))
+        self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
         self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 1,(0,1,2),None,None))
         self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,(1,1,0),None,ACTION_HARVEST))
         self.unit_types.append(UnitType(UNIT_CAVALRY, 3, 3, 1, 1,(1,1,2),None,ACTION_CHARGE))
@@ -169,18 +174,7 @@ class Battle:
     def team_setup(self):
         self.teams = []
         self.teams.append(Team("Red",'red'))
-        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[0], self.map.find_tile(6,0)))
-        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(6,2)))
-        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(3,1)))
-        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[1], self.map.find_tile(9,1)))
-        self.teams[0].units.append(Unit(self.teams[0], self.unit_types[3], self.map.find_tile(7,2)))
         self.teams.append(Team("Blue",'blue'))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[0], self.map.find_tile(5,11)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(5,9)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(2,10)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[1], self.map.find_tile(8,10)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[2], self.map.find_tile(6,10)))
-        self.teams[1].units.append(Unit(self.teams[1], self.unit_types[4], self.map.find_tile(9,10)))
          
     def run(self):
         self.map.draw()
@@ -238,6 +232,9 @@ class Battle:
                                             self.game.turn.action.movement(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)
                                         if self.currentaction == ACTION_ATTACK:
                                             self.game.turn.action.attack(self.game.map.find_tile(i,j-1),self.game.turn.action.tile.unit.unit_type.hits)             
+                                        if self.currentaction == ACTION_PLACE_BASE:
+                                            self.game.turn.action.placebase(self.game.map.find_tile(i,j-1))             
+
                                     else:
                                         self.action = False
                                         self.currentaction = None
@@ -532,7 +529,12 @@ class UnitType:
         if self.hits != 0:
             self.actions.append(ACTION_ATTACK)
         if self.special_actions != None:
-            self.actions.append(self.special_actions)
+            if isinstance(self.special_actions, str):  
+                self.actions.append(self.special_actions)
+            if isinstance(self.special_actions, tuple): 
+                for action in self.special_actions:
+                    self.actions.append(action)
+                
         self.movesleft = 1
 
 class Turn:
@@ -585,15 +587,17 @@ class Action:
             self.action_buttons[i].draw()
             
     def first_turn(self):
-        self.firstturn = False
-        self.available_actions.append('place base') 
-        #self.draw_buttons(None)
+        self.firstturn = True
+        self.available_actions.append('Place Base') 
+        self.draw_buttons(None)
 
     def take_action(self,action,unit):
         if action == ACTION_MOVE:
             self.movselect(unit)
         if action == ACTION_ATTACK:
             self.atkselect(unit)
+        if action == ACTION_PLACE_BASE:
+            self.placebaseselect()
         if action == ACTION_END_TURN:
             self.endturn()
 
@@ -664,7 +668,7 @@ class Action:
                     self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
-
+    
     def movement(self,new_tile,old_tile):
         new_tile.unit = old_tile.unit
         old_tile.unit = None
@@ -680,8 +684,27 @@ class Action:
             attacked_tile.unit.die()
         self.actionablespaces = []
 
-    def placebase(self):
-        s = 1
+    def placebaseselect(self):
+        self.actionablespaces = []
+        for tile in self.game.map.tiles:
+            if tile.type != 3 and tile.type != 10 and tile.type != 11 and tile.type != 12 and tile.type != 13 and tile.unit == None:
+                self.actionablespaces.append(tile)
+        self.tileselectiondraw(self.actionablespaces)
+        self.game.battle.action = True
+    def placebase(self,tile):
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[0], self.game.map.find_tile(tile.x,tile.y)))
+        a = [self.game.map.find_tile(tile.x+1,tile.y),self.game.map.find_tile(tile.x-1,tile.y),self.game.map.find_tile(tile.x,tile.y+1),self.game.map.find_tile(tile.x,tile.y-1)]
+        for tile in a:
+            if tile.type == 3 and tile.type == 10 and tile.type == 11 and tile.type == 12 and tile.type == 13 and tile.unit != None:
+                a.remove(tile)
+        i = random.randint(0,len(a)-1)
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[2],a[i]))
+        if self.turn.current_team == self.game.battle.teams[1]:
+            self.firstturn = False
+            self.available_actions.clear()
+        self.endturn()
+        self.game.map.draw()
+        self.actionablespaces.clear()
 
     def tileselectiondraw(self,tiles):
         for tile in tiles:
