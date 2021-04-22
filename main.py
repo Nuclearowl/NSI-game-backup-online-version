@@ -512,6 +512,7 @@ class Unit:
         self.tile = tile
         self.actions = unit_type.actions
         tile.unit = self
+        self.movesleft = 1
     def die(self):
         self.tile.unit = None
         self.team.units.remove(self)
@@ -532,6 +533,7 @@ class UnitType:
             self.actions.append(ACTION_ATTACK)
         if self.special_actions != None:
             self.actions.append(self.special_actions)
+        self.movesleft = 1
 
 class Turn:
     def __init__(self, game):
@@ -600,56 +602,63 @@ class Action:
         self.tile = unit.tile
         self.x = unit.tile.x
         self.y = unit.tile.y
-        self.actionablespaces = [self.tile]
+        self.actionablespaces = []
         tempmovspaces = []
+        self.tempmovspaces2 = [self.tile]
         for i in range (self.movrange):
-            for tile in self.actionablespaces:
-                if tile.x < MAP_SIZE:
-                    if self.game.map.find_tile(tile.x+1,tile.y) not in  tempmovspaces:
-                       tempmovspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+            for tile in self.tempmovspaces2:
+                if tile.x < MAP_SIZE - 1:
+                    tile2 = self.game.map.find_tile(tile.x+1,tile.y)
+                    if tile2 not in  tempmovspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempmovspaces.append(tile2)
                 if tile.x > 0:
-                    if self.game.map.find_tile(tile.x-1,tile.y) not in  tempmovspaces:
-                        tempmovspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
-                if tile.y < MAP_SIZE  :
-                    if self.game.map.find_tile(tile.x,tile.y+1) not in  tempmovspaces:
-                        tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                    tile2 = self.game.map.find_tile(tile.x-1,tile.y)
+                    if tile2 not in  tempmovspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempmovspaces.append(tile2)
+                if tile.y < MAP_SIZE - 1 :
+                    tile2 = self.game.map.find_tile(tile.x,tile.y+1)
+                    if tile2 not in  tempmovspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempmovspaces.append(tile2)
                 if tile.y > 0:
-                    if self.game.map.find_tile(tile.x,tile.y-1) not in  tempmovspaces:
-                        tempmovspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+                    tile2 = self.game.map.find_tile(tile.x,tile.y-1)
+                    if tile2 not in  tempmovspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempmovspaces.append(tile2)
             for tile in tempmovspaces:
-                self.actionablespaces.append(tile)
+                self.tempmovspaces2.append(tile)
             tempmovspaces.clear()
-        self.actionablespaces.remove(self.tile)
+        self.tempmovspaces2.remove(self.tile)
+        for tile in self.tempmovspaces2:
+                self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
     
     def atkselect(self,unit): 
-        self.atkrange = unit.unit_type.move
+        self.atkrange = unit.unit_type.range
         self.tile = unit.tile
         self.x = unit.tile.x
         self.y = unit.tile.y
         self.actionablespaces = []
         tempattackspaces = []
-        tempattackspaces2 = [self.tile]
+        self.tempattackspaces2 = [self.tile]
         for i in range (self.atkrange):
-            for tile in tempattackspaces2:
-                if tile.x < MAP_SIZE:
+            for tile in self.tempattackspaces2:
+                if tile.x < MAP_SIZE - 1:
                     if self.game.map.find_tile(tile.x+1,tile.y) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
                 if tile.x > 0:
                     if self.game.map.find_tile(tile.x-1,tile.y) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
-                if tile.y < MAP_SIZE  :
+                if tile.y < MAP_SIZE - 1 :
                     if self.game.map.find_tile(tile.x,tile.y+1) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
                 if tile.y > 0:
                     if self.game.map.find_tile(tile.x,tile.y-1) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
             for tile in tempattackspaces:
-                tempattackspaces2.append(tile)
+                self.tempattackspaces2.append(tile)
             tempattackspaces.clear()
-        tempattackspaces2.remove(self.tile)
-        for tile in tempattackspaces2:
+        self.tempattackspaces2.remove(self.tile)
+        for tile in self.tempattackspaces2:
             if tile.unit != None:
                 if tile.unit.team != unit.team:
                     self.actionablespaces.append(tile)
