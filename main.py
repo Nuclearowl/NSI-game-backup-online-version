@@ -232,6 +232,8 @@ class Battle:
                                             self.game.turn.action.movement(self.game.map.find_tile(i,j-1),self.game.turn.action.tile)
                                         if self.currentaction == ACTION_ATTACK:
                                             self.game.turn.action.attack(self.game.map.find_tile(i,j-1),self.game.turn.action.tile.unit.unit_type.hits)             
+                                        if self.currentaction == ACTION_HARVEST:
+                                            self.game.turn.action.harvest(self.game.map.find_tile(i,j-1)) 
                                         if self.currentaction == ACTION_PLACE_BASE:
                                             self.game.turn.action.placebase(self.game.map.find_tile(i,j-1))             
 
@@ -460,7 +462,7 @@ class ContextWindow:
         self.clickableinfo = self.title_entries[self.game.map.tiles[tilenb].type]
         self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
         self.resourcetext = self.game.map.tiles[tilenb].resource_type
-        self.resourcenb = self.game.map.tiles[tilenb].resources
+        self.resourcenb = str(self.game.map.tiles[tilenb].resources)
         self.chosen_unit = self.game.map.tiles[tilenb].unit
         # This unit can play this turn
         if self.chosen_unit != None and self.chosen_unit.team == self.game.turn.current_team:
@@ -500,6 +502,9 @@ class Team:
         self.name = name
         self.color = color
         self.units = []
+        self.wood = 0
+        self.stone = 0
+        self.metal = 0
 
 class Unit:
     def __init__(self, team, unit_type, tile):
@@ -598,6 +603,8 @@ class Action:
             self.atkselect(unit)
         if action == ACTION_PLACE_BASE:
             self.placebaseselect()
+        if action == ACTION_HARVEST:
+            self.harvestselect(unit)
         if action == ACTION_END_TURN:
             self.endturn()
 
@@ -643,9 +650,9 @@ class Action:
         self.y = unit.tile.y
         self.actionablespaces = []
         tempattackspaces = []
-        self.tempattackspaces2 = [self.tile]
+        tempattackspaces2 = [self.tile]
         for i in range (self.atkrange):
-            for tile in self.tempattackspaces2:
+            for tile in tempattackspaces2:
                 if tile.x < MAP_SIZE - 1:
                     if self.game.map.find_tile(tile.x+1,tile.y) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
@@ -659,10 +666,10 @@ class Action:
                     if self.game.map.find_tile(tile.x,tile.y-1) not in  tempattackspaces:
                         tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
             for tile in tempattackspaces:
-                self.tempattackspaces2.append(tile)
+                tempattackspaces2.append(tile)
             tempattackspaces.clear()
-        self.tempattackspaces2.remove(self.tile)
-        for tile in self.tempattackspaces2:
+        tempattackspaces2.remove(self.tile)
+        for tile in tempattackspaces2:
             if tile.unit != None:
                 if tile.unit.team != unit.team:
                     self.actionablespaces.append(tile)
@@ -691,12 +698,26 @@ class Action:
                 self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
+
     def placebase(self,tile):
         self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[0], self.game.map.find_tile(tile.x,tile.y)))
-        a = [self.game.map.find_tile(tile.x+1,tile.y),self.game.map.find_tile(tile.x-1,tile.y),self.game.map.find_tile(tile.x,tile.y+1),self.game.map.find_tile(tile.x,tile.y-1)]
-        for tile in a:
-            if tile.type == 3 and tile.type == 10 and tile.type == 11 and tile.type == 12 and tile.type == 13 and tile.unit != None:
-                a.remove(tile)
+        a = []
+        if tile.x < MAP_SIZE - 1:
+                    tile2 = self.game.map.find_tile(tile.x+1,tile.y)
+                    if  tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        a.append(tile2)
+        if tile.x > 0:
+                    tile2 = self.game.map.find_tile(tile.x-1,tile.y)
+                    if  tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        a.append(tile2)
+        if tile.y < MAP_SIZE - 1 :
+                    tile2 = self.game.map.find_tile(tile.x,tile.y+1)
+                    if  tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        a.append(tile2)
+        if tile.y > 0:
+                    tile2 = self.game.map.find_tile(tile.x,tile.y-1)
+                    if  tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        a.append(tile2)
         i = random.randint(0,len(a)-1)
         self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[2],a[i]))
         if self.turn.current_team == self.game.battle.teams[1]:
@@ -706,6 +727,53 @@ class Action:
         self.game.map.draw()
         self.actionablespaces.clear()
 
+    def harvestselect(self,unit):
+        self.tile = unit.tile
+        self.x = unit.tile.x
+        self.y = unit.tile.y
+        self.actionablespaces = []
+        tempharvestspaces = []
+        tempharvestspaces2 = [self.tile]
+        
+        for tile in tempharvestspaces2:
+            if tile.x < MAP_SIZE - 1:
+                if self.game.map.find_tile(tile.x+1,tile.y) not in  tempharvestspaces:
+                    tempharvestspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+            if tile.x > 0:
+                if self.game.map.find_tile(tile.x-1,tile.y) not in  tempharvestspaces:
+                    tempharvestspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+            if tile.y < MAP_SIZE - 1 :
+                if self.game.map.find_tile(tile.x,tile.y+1) not in  tempharvestspaces:
+                        tempharvestspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+            if tile.y > 0:
+                if self.game.map.find_tile(tile.x,tile.y-1) not in  tempharvestspaces:
+                    tempharvestspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+        for tile in tempharvestspaces:
+            tempharvestspaces2.append(tile)
+        tempharvestspaces.clear()
+        tempharvestspaces2.remove(self.tile)
+        self.actionablespaces.append(self.tile)
+        for tile in tempharvestspaces2:
+            if tile.unit == None:
+                if tile.type == 5 or tile.type == 7 or tile.type == 9:
+                    self.actionablespaces.append(tile)
+        self.tileselectiondraw(self.actionablespaces)
+        self.game.battle.action = True
+
+    def harvest(self,harvested_tile):
+        self.actionablespaces = []
+        if harvested_tile.type == 5:
+            if harvested_tile.resources != 0:
+                self.turn.current_team.wood += 1
+                harvested_tile.resources = int(harvested_tile.resources) - 1
+        if harvested_tile.type == 7:
+            if harvested_tile.resources != 0:
+                self.turn.current_team.stone += 1
+                harvested_tile.resources = int(harvested_tile.resources) - 1
+        if harvested_tile.type == 5:
+            if harvested_tile.resources != 0:
+                self.turn.current_team.metal += 1
+                harvested_tile.resources = int(harvested_tile.resources) - 1
     def tileselectiondraw(self,tiles):
         for tile in tiles:
             img = Battle.colorgen[12].copy()
