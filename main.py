@@ -165,9 +165,9 @@ class Battle:
         
     def unit_types_setup(self):
         self.unit_types = []
-        self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
+        self.unit_types.append(UnitType(UNIT_BASE, 1, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
         self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 2,(0,1,2),None,None))
-        self.unit_types.append(UnitType(UNIT_WORKER, 2, 2, 0, 0,(1,1,0),None,ACTION_HARVEST))
+        self.unit_types.append(UnitType(UNIT_WORKER, 2, 2, 1, 1,(1,1,0),None,ACTION_HARVEST))
         self.unit_types.append(UnitType(UNIT_CAVALRY, 4, 3, 1, 1,(1,2,2),None,ACTION_CHARGE))
         self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,(1,1,1),None,None))
     
@@ -262,7 +262,8 @@ class Battle:
                     self.game.map.draw()
                     self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
                     self.game.turn.action.draw_window(self.game.turn.current_team)
-                    pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
+                    if self.currentsquare != None:
+                        pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
@@ -274,14 +275,15 @@ class Battle:
                     self.game.map.draw()
                     self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
                     self.game.turn.action.draw_window(self.game.turn.current_team)
-                    pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
+                    if self.currentsquare != None:
+                        pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                     #for i in range(MAP_SIZE):
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
                     #        rect.topleft = self.w / 2 + self.tilesize * i, self.tilesize * j
                     #        Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect)
             pygame.display.update()
-        pygame.quit()
+        Game.gameoverscreen()
 
 
 
@@ -300,6 +302,12 @@ class Game:
             self.battle = Battle(self)
             self.turn = Turn(self) 
             self.battle.run()
+    def gameoverscreen():
+        Game.screen.fill(Color('gray'))
+        Text('gameover',Game.screen.get_width()/2,Game.screen.get_height()/2,80,'purple')
+        time.sleep(2)
+        pygame.quit()
+
             
 class Map:
     def __init__(self):
@@ -468,11 +476,17 @@ class ContextWindow:
         self.chosen_unit = None
         self.unit_text = Text("", 40, 152)
         self.unit_life = Text("", 40, 152)
+        self.set_initial_description()
 
+    def set_initial_description(self):
+        self.clickableinfo = ''
+        self.clickabledescription = ''
+        self.resourcetext = ''
+        self.resourcenb = ''
     def set_description(self, tilenb):
         self.actions.clear()
-        self.clickableinfo = self.title_entries[self.game.map.tiles[tilenb].type]
-        self.clickabledescription = self.textentries[self.game.map.tiles[tilenb].type]
+        self.clickableinfo = str(self.title_entries[self.game.map.tiles[tilenb].type])
+        self.clickabledescription = str(self.textentries[self.game.map.tiles[tilenb].type])
         self.resourcetext = self.game.map.tiles[tilenb].resource_type
         self.resourcenb = str(self.game.map.tiles[tilenb].resources)
         self.chosen_unit = self.game.map.tiles[tilenb].unit
@@ -529,6 +543,8 @@ class Unit:
         tile.unit = self
         self.movesleft = 1
     def die(self):
+        if self.unit_type.name == UNIT_BASE:
+            Battle.running = False
         self.tile.unit = None
         self.team.units.remove(self)
 
@@ -783,7 +799,8 @@ class Action:
             tempharvestspaces2.append(tile)
         tempharvestspaces.clear()
         tempharvestspaces2.remove(self.tile)
-        self.actionablespaces.append(self.tile)
+        if self.tile.type == 5 or self.tile.type == 7 or self.tile.type == 9 or self.tile.type == 8: 
+            self.actionablespaces.append(self.tile)
         for tile in tempharvestspaces2:
             if tile.unit == None:
                 if tile.type == 5 or tile.type == 7 or tile.type == 9 or tile.type == 8:
@@ -850,6 +867,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.game.map.draw()
 
     def spawnworker(self,tile):
         self.actionablespaces = []
@@ -861,6 +879,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.game.map.draw()
 
     def spawncavalry(self,tile):
         self.actionablespaces = []
@@ -872,6 +891,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.game.map.draw()
 
     def spawnarchers(self,tile):
         self.actionablespaces = []
@@ -883,6 +903,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.game.map.draw()
 
     def tileselectiondraw(self,tiles):
         for tile in tiles:
