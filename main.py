@@ -20,10 +20,10 @@ ACTION_MOVE = "Move"
 ACTION_CHARGE = "Charge"
 ACTION_HARVEST = "Harvest"
 ACTION_PLACE_BASE = 'Place Base'
-ACTION_SPAWN_WORKERS = 'Spawn Worker'
-ACTION_SPAWN_INFANTRY = 'Spawn Infantry'
-ACTION_SPAWN_CAVALRY = 'Spawn Cavalry'
-ACTION_SPAWN_ARCHERS = 'Spawn Archers'
+ACTION_SPAWN_WORKERS = 'Spawn Worker for 1w 1s'
+ACTION_SPAWN_INFANTRY = 'Spawn Infantry for 2s 1m'
+ACTION_SPAWN_CAVALRY = 'Spawn Cavalry for 1w 2s 2m'
+ACTION_SPAWN_ARCHERS = 'Spawn Archers for 1w 1s 1m'
 MAP_SIZE = 12
 
 class Text:
