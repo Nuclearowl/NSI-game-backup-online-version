@@ -54,9 +54,9 @@ class Text:
 class Menu:
     #permet de creer et gerer le jeu et l'ecran
     def __init__(self):
-        pygame.display.set_caption('Castillon')
+        pygame.display.set_caption('Base Battle')
         pygame.display.set_icon(pygame.image.load('grass.png'))
-        self.title = Text('Castillon', 0, 20, 400, 'blue')
+        self.title = Text('Base Battle', 0, 20, 300, 'blue')
         self.title.pos = (Game.screen.get_width()/2 - self.title.rect.width / 2, 20)
         self.title.set_font()
         self.title.render()
