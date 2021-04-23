@@ -165,9 +165,9 @@ class Battle:
         
     def unit_types_setup(self):
         self.unit_types = []
-        self.unit_types.append(UnitType(UNIT_BASE, 1, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
+        self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
         self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 2,(0,1,2),None,None))
-        self.unit_types.append(UnitType(UNIT_WORKER, 2, 2, 1, 1,(1,1,0),None,ACTION_HARVEST))
+        self.unit_types.append(UnitType(UNIT_WORKER, 2, 2, 0, 0,(1,1,0),None,ACTION_HARVEST))
         self.unit_types.append(UnitType(UNIT_CAVALRY, 4, 3, 1, 1,(1,2,2),None,ACTION_CHARGE))
         self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,(1,1,1),None,None))
     
@@ -305,6 +305,7 @@ class Game:
     def gameoverscreen():
         Game.screen.fill(Color('gray'))
         Text('gameover',Game.screen.get_width()/2,Game.screen.get_height()/2,80,'purple')
+        pygame.display.update()
         time.sleep(2)
         pygame.quit()
 
