@@ -166,9 +166,9 @@ class Battle:
     def unit_types_setup(self):
         self.unit_types = []
         self.unit_types.append(UnitType(UNIT_BASE, 5, 0, 0, 0,(0,0,0),None,(ACTION_SPAWN_WORKERS,ACTION_SPAWN_INFANTRY,ACTION_SPAWN_CAVALRY,ACTION_SPAWN_ARCHERS)))
-        self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 1,(0,1,2),None,None))
-        self.unit_types.append(UnitType(UNIT_WORKER, 2, 1, 0, 0,(1,1,0),None,ACTION_HARVEST))
-        self.unit_types.append(UnitType(UNIT_CAVALRY, 3, 3, 1, 1,(1,1,2),None,ACTION_CHARGE))
+        self.unit_types.append(UnitType(UNIT_INFANTRY, 3, 1, 1, 2,(0,1,2),None,None))
+        self.unit_types.append(UnitType(UNIT_WORKER, 2, 2, 0, 0,(1,1,0),None,ACTION_HARVEST))
+        self.unit_types.append(UnitType(UNIT_CAVALRY, 4, 3, 1, 1,(1,2,2),None,ACTION_CHARGE))
         self.unit_types.append(UnitType(UNIT_ARCHERS, 2, 1, 3, 1,(1,1,1),None,None))
     
     def team_setup(self):
@@ -235,7 +235,15 @@ class Battle:
                                         if self.currentaction == ACTION_HARVEST:
                                             self.game.turn.action.harvest(self.game.map.find_tile(i,j-1)) 
                                         if self.currentaction == ACTION_PLACE_BASE:
-                                            self.game.turn.action.placebase(self.game.map.find_tile(i,j-1))             
+                                            self.game.turn.action.placebase(self.game.map.find_tile(i,j-1))  
+                                        if self.currentaction == ACTION_SPAWN_INFANTRY:
+                                            self.game.turn.action.spawninfantry(self.game.map.find_tile(i,j-1))  
+                                        if self.currentaction == ACTION_SPAWN_WORKERS:
+                                            self.game.turn.action.spawnworker(self.game.map.find_tile(i,j-1))  
+                                        if self.currentaction == ACTION_SPAWN_CAVALRY:
+                                            self.game.turn.action.spawncavalry(self.game.map.find_tile(i,j-1))  
+                                        if self.currentaction == ACTION_SPAWN_ARCHERS:
+                                            self.game.turn.action.spawnarchers(self.game.map.find_tile(i,j-1))             
 
                                     else:
                                         self.action = False
@@ -416,13 +424,17 @@ class Tile:
         elif self.type == 7:
             self.resource_type = "Rock:"
             self.resources = str(random.randint(1,2))
-        elif self.type == 9:
+        elif self.type == 9 :
             self.resource_type = "Metal:"
             self.resources = "1"
+        elif  self.type == 8:
+            self.resource_type = "Metal:"
+            self.resources = str(random.randint(1,2))
         else:
             self.resource_type = ""
             self.resources = ""
         self.unit = None
+        self.id = self.x*MAP_SIZE + self.y
 
     def draw(self):
         # Terrain
@@ -466,8 +478,9 @@ class ContextWindow:
         self.chosen_unit = self.game.map.tiles[tilenb].unit
         # This unit can play this turn
         if self.chosen_unit != None and self.chosen_unit.team == self.game.turn.current_team:
-            for action in self.chosen_unit.actions:
-                self.actions.append(action)
+            if self.chosen_unit.movesleft != 0:
+                for action in self.chosen_unit.actions:
+                    self.actions.append(action)
 
     def draw(self):
         # Terrain
@@ -529,6 +542,7 @@ class UnitType:
         self.spawn_types = spawn_types
         self.special_actions = special_actions
         self.actions = []
+        self.cost = cost
         if self.move != 0:
             self.actions.append(ACTION_MOVE)
         if self.hits != 0:
@@ -550,6 +564,8 @@ class Turn:
         self.action.draw_window(self.current_team)
         
     def change_turn(self):
+        for unit in self.current_team.units:
+            unit.movesleft = 1
         if self.current_team == self.game.battle.teams[0]:
             self.current_team = self.game.battle.teams[1]
         else:
@@ -579,8 +595,9 @@ class Action:
         
         if self.firstturn == False:
             self.available_actions.clear()
-            for i in range (len(self.actions)):
-                self.available_actions.append(self.actions[i])
+            if self.actions != None:
+                for i in range (len(self.actions)):
+                    self.available_actions.append(self.actions[i])
             self.available_actions.append(ACTION_END_TURN)
         if self.action_buttons != None:
             for actionbutton in self.action_buttons:
@@ -607,6 +624,14 @@ class Action:
             self.harvestselect(unit)
         if action == ACTION_END_TURN:
             self.endturn()
+        if action == ACTION_SPAWN_WORKERS :
+            self.spawnselect(unit,self.game.battle.unit_types[2].cost)
+        if action == ACTION_SPAWN_INFANTRY:
+            self.spawnselect(unit,self.game.battle.unit_types[1].cost)
+        if action == ACTION_SPAWN_CAVALRY:
+            self.spawnselect(unit,self.game.battle.unit_types[3].cost)
+        if action == ACTION_SPAWN_ARCHERS:
+            self.spawnselect(unit,self.game.battle.unit_types[4].cost)
 
     def movselect(self,unit):
         self.movrange = unit.unit_type.move
@@ -684,12 +709,18 @@ class Action:
         self.game.contextWindow.set_description(new_tile.x*MAP_SIZE+new_tile.y)
         self.game.contextWindow.draw()
         self.game.map.draw()
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
 
     def attack(self,attacked_tile,hits):
         attacked_tile.unit.life = attacked_tile.unit.life - hits
         if  attacked_tile.unit.life <= 0:
             attacked_tile.unit.die()
         self.actionablespaces = []
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
 
     def placebaseselect(self):
         self.actionablespaces = []
@@ -755,7 +786,7 @@ class Action:
         self.actionablespaces.append(self.tile)
         for tile in tempharvestspaces2:
             if tile.unit == None:
-                if tile.type == 5 or tile.type == 7 or tile.type == 9:
+                if tile.type == 5 or tile.type == 7 or tile.type == 9 or tile.type == 8:
                     self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
@@ -770,10 +801,89 @@ class Action:
             if harvested_tile.resources != 0:
                 self.turn.current_team.stone += 1
                 harvested_tile.resources = int(harvested_tile.resources) - 1
-        if harvested_tile.type == 5:
+        if harvested_tile.type == 9 or harvested_tile.type == 8:
             if harvested_tile.resources != 0:
                 self.turn.current_team.metal += 1
                 harvested_tile.resources = int(harvested_tile.resources) - 1
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+    
+    def spawnselect(self,unit,cost):
+        if self.turn.current_team.wood >= cost[0] and self.turn.current_team.stone >= cost[1] and self.turn.current_team.metal >= cost[2]:
+            self.tile = unit.tile
+            self.x = unit.tile.x
+            self.y = unit.tile.y
+            self.actionablespaces = []
+            tempspawnspaces = []
+            tempspawnspaces2 = [self.tile]
+            for tile in tempspawnspaces2:
+                if tile.x < MAP_SIZE - 1:
+                    if self.game.map.find_tile(tile.x+1,tile.y) not in  tempspawnspaces:
+                        tempspawnspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                if tile.x > 0:
+                    if self.game.map.find_tile(tile.x-1,tile.y) not in  tempspawnspaces:
+                        tempspawnspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                if tile.y < MAP_SIZE - 1 :
+                    if self.game.map.find_tile(tile.x,tile.y+1) not in  tempspawnspaces:
+                        tempspawnspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                if tile.y > 0:
+                    if self.game.map.find_tile(tile.x,tile.y-1) not in  tempspawnspaces:
+                        tempspawnspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+            for tile in tempspawnspaces:
+                tempspawnspaces2.append(tile)
+            tempspawnspaces.clear()
+            tempspawnspaces2.remove(self.tile)
+            
+            for tile in tempspawnspaces2:
+                if tile.type != 3 and tile.type != 10 and tile.type != 11 and tile.type != 12 and tile.type != 13 and tile.unit == None:    
+                    self.actionablespaces.append(tile)
+            self.tileselectiondraw(self.actionablespaces)
+            self.game.battle.action = True
+    def spawninfantry(self,tile):
+        self.actionablespaces = []
+        cost = self.game.battle.unit_types[1].cost
+        self.turn.current_team.wood =self.turn.current_team.wood - cost[0] 
+        self.turn.current_team.stone = self.turn.current_team.stone - cost[1] 
+        self.turn.current_team.metal = self.turn.current_team.metal - cost[2]
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[1], self.game.map.find_tile(tile.x,tile.y)))
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+
+    def spawnworker(self,tile):
+        self.actionablespaces = []
+        cost = self.game.battle.unit_types[2].cost
+        self.turn.current_team.wood =self.turn.current_team.wood - cost[0] 
+        self.turn.current_team.stone = self.turn.current_team.stone - cost[1] 
+        self.turn.current_team.metal = self.turn.current_team.metal - cost[2]
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[2], self.game.map.find_tile(tile.x,tile.y)))
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+
+    def spawncavalry(self,tile):
+        self.actionablespaces = []
+        cost = self.game.battle.unit_types[3].cost
+        self.turn.current_team.wood =self.turn.current_team.wood - cost[0] 
+        self.turn.current_team.stone = self.turn.current_team.stone - cost[1] 
+        self.turn.current_team.metal = self.turn.current_team.metal - cost[2]
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[3], self.game.map.find_tile(tile.x,tile.y)))
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+
+    def spawnarchers(self,tile):
+        self.actionablespaces = []
+        cost = self.game.battle.unit_types[4].cost
+        self.turn.current_team.wood =self.turn.current_team.wood - cost[0] 
+        self.turn.current_team.stone = self.turn.current_team.stone - cost[1] 
+        self.turn.current_team.metal = self.turn.current_team.metal - cost[2]
+        self.turn.current_team.units.append(Unit(self.turn.current_team, self.game.battle.unit_types[4], self.game.map.find_tile(tile.x,tile.y)))
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+
     def tileselectiondraw(self,tiles):
         for tile in tiles:
             img = Battle.colorgen[12].copy()
