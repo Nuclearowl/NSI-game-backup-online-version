@@ -21,7 +21,7 @@ ACTION_CHARGE = "Charge"
 ACTION_HARVEST = "Harvest"
 ACTION_PLACE_BASE = 'Place Base'
 ACTION_SPAWN_WORKERS = 'Spawn Worker for 1w 1s'
-ACTION_SPAWN_INFANTRY = 'Spawn Infantry for 2s 1m'
+ACTION_SPAWN_INFANTRY = 'Spawn Infantry for 1s 2m'
 ACTION_SPAWN_CAVALRY = 'Spawn Cavalry for 1w 2s 2m'
 ACTION_SPAWN_ARCHERS = 'Spawn Archers for 1w 1s 1m'
 MAP_SIZE = 12
@@ -304,7 +304,8 @@ class Game:
             self.battle.run()
     def gameoverscreen():
         Game.screen.fill(Color('gray'))
-        Text('gameover',Game.screen.get_width()/2,Game.screen.get_height()/2,80,'purple')
+        a = Text('gameover',Game.screen.get_width()/2,Game.screen.get_height()/2,80,'purple')
+        a.draw()
         pygame.display.update()
         time.sleep(2)
         pygame.quit()
