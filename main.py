@@ -161,6 +161,7 @@ class Battle:
         pygame.image.load("blueinfantry.png").convert()]
         Battle.redunitimgs = [pygame.image.load("redbase.png").convert(),pygame.image.load("redcavalry.png").convert(),
         pygame.image.load("redinfantry.png").convert()]
+        Battle.resourceicons = [pygame.image.load("wood.png").convert(),pygame.image.load("stone.png").convert(),pygame.image.load("metal.png").convert()]
             #liste des images pertinentes sur ces tuiles/unites
         
     def unit_types_setup(self):
@@ -243,7 +244,8 @@ class Battle:
                                         if self.currentaction == ACTION_SPAWN_CAVALRY:
                                             self.game.turn.action.spawncavalry(self.game.map.find_tile(i,j-1))  
                                         if self.currentaction == ACTION_SPAWN_ARCHERS:
-                                            self.game.turn.action.spawnarchers(self.game.map.find_tile(i,j-1))             
+                                            self.game.turn.action.spawnarchers(self.game.map.find_tile(i,j-1))  
+                                        self.action = False           
 
                                     else:
                                         self.action = False
@@ -485,6 +487,7 @@ class ContextWindow:
         self.clickabledescription = ''
         self.resourcetext = ''
         self.resourcenb = ''
+        
     def set_description(self, tilenb):
         self.actions.clear()
         self.clickableinfo = str(self.title_entries[self.game.map.tiles[tilenb].type])
@@ -595,19 +598,49 @@ class Action:
         self.game = game
         self.turn = turn
         self.turn_indicator = Text('', 40, 20)
+        self.wood = Text('', 40, 20)
+        self.stone = Text('', 40, 20)
+        self.metal = Text('', 40, 20)
         self.available_actions = []
         self.action_buttons = []    
         self.first_turn()
         self.actionablespaces = []
     
     def draw_window(self, team):
-        pygame.draw.rect(Game.screen, Color('gray'), self.turn_indicator.rect )
+        self.draw_resources(team)
+        self.turn_indicator.erase()
         self.turn_indicator = Text(team.name + "'s turn", 40, 20, 80)
         self.turn_indicator.fontcolor = Color(team.color)
         self.turn_indicator.set_font()
         self.turn_indicator.render()
         self.turn_indicator.draw()
-    
+
+    def draw_resources(self,team):
+        self.wood.erase()
+        self.stone.erase()
+        self.metal.erase()
+        img = Battle.resourceicons[0]
+        img.set_colorkey('black')
+        rect = img.get_rect()
+        rect.topleft = Game.screen.get_width() / 2, 660
+        Game.screen.blit(img, rect)
+        self.wood = Text('= '+str(team.wood), Game.screen.get_width()/2+ rect.width, 660)
+        img = Battle.resourceicons[1]
+        img.set_colorkey('black')
+        rect = img.get_rect()
+        rect.topleft = self.wood.rect.topright[0], 660
+        Game.screen.blit(img, rect)
+        self.stone = Text('= '+str(team.stone),rect.topright[0], 660)
+        img = Battle.resourceicons[2]
+        img.set_colorkey('black')
+        rect = img.get_rect()
+        rect.topleft = self.stone.rect.topright[0], 660
+        Game.screen.blit(img, rect)
+        self.metal = Text('= '+str(team.metal),rect.topright[0], 660)
+        Game.screen.blit(img, rect)
+        self.wood.draw()
+        self.stone.draw()
+        self.metal.draw()
     def draw_buttons(self, actions):
         self.actions = actions
         
@@ -773,6 +806,8 @@ class Action:
             self.firstturn = False
             self.available_actions.clear()
         self.endturn()
+        self.game.contextWindow.set_description(tile.id)
+        self.game.contextWindow.draw()
         self.game.map.draw()
         self.actionablespaces.clear()
 
@@ -783,7 +818,6 @@ class Action:
         self.actionablespaces = []
         tempharvestspaces = []
         tempharvestspaces2 = [self.tile]
-        
         for tile in tempharvestspaces2:
             if tile.x < MAP_SIZE - 1:
                 if self.game.map.find_tile(tile.x+1,tile.y) not in  tempharvestspaces:
@@ -801,12 +835,14 @@ class Action:
             tempharvestspaces2.append(tile)
         tempharvestspaces.clear()
         tempharvestspaces2.remove(self.tile)
-        if self.tile.type == 5 or self.tile.type == 7 or self.tile.type == 9 or self.tile.type == 8: 
-            self.actionablespaces.append(self.tile)
+        if self.tile.type == 5 or self.tile.type == 7 or self.tile.type == 9 or self.tile.type == 8 : 
+            if self.tile.resources != 0 :
+                self.actionablespaces.append(self.tile)
         for tile in tempharvestspaces2:
             if tile.unit == None:
-                if tile.type == 5 or tile.type == 7 or tile.type == 9 or tile.type == 8:
-                    self.actionablespaces.append(tile)
+                if tile.type == 5 or tile.type == 7 or tile.type == 9 or tile.type == 8  :
+                    if tile.resources != 0:
+                        self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
 
@@ -827,6 +863,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.draw_resources(self.turn.current_team)
     
     def spawnselect(self,unit,cost):
         if self.turn.current_team.wood >= cost[0] and self.turn.current_team.stone >= cost[1] and self.turn.current_team.metal >= cost[2]:
