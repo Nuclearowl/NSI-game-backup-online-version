@@ -244,7 +244,9 @@ class Battle:
                                         if self.currentaction == ACTION_SPAWN_CAVALRY:
                                             self.game.turn.action.spawncavalry(self.game.map.find_tile(i,j-1))  
                                         if self.currentaction == ACTION_SPAWN_ARCHERS:
-                                            self.game.turn.action.spawnarchers(self.game.map.find_tile(i,j-1))  
+                                            self.game.turn.action.spawnarchers(self.game.map.find_tile(i,j-1)) 
+                                        if self.currentaction == ACTION_CHARGE: 
+                                            self.game.turn.action.charge(self.game.map.find_tile(i,j-1),self.game.turn.action.tile.unit.unit_type.hits)
                                         self.action = False           
 
                                     else:
@@ -534,9 +536,9 @@ class Team:
         self.name = name
         self.color = color
         self.units = []
-        self.wood = 0
-        self.stone = 0
-        self.metal = 0
+        self.wood = 1
+        self.stone = 2
+        self.metal = 3
 
 class Unit:
     def __init__(self, team, unit_type, tile):
@@ -668,7 +670,7 @@ class Action:
         if action == ACTION_MOVE:
             self.movselect(unit)
         if action == ACTION_ATTACK:
-            self.atkselect(unit)
+            self.atkselect(unit,unit.unit_type.range)
         if action == ACTION_PLACE_BASE:
             self.placebaseselect()
         if action == ACTION_HARVEST:
@@ -683,6 +685,8 @@ class Action:
             self.spawnselect(unit,self.game.battle.unit_types[3].cost)
         if action == ACTION_SPAWN_ARCHERS:
             self.spawnselect(unit,self.game.battle.unit_types[4].cost)
+        if action == ACTION_CHARGE:
+            self.chargeselect(unit,unit.unit_type.move)
 
     def movselect(self,unit):
         self.movrange = unit.unit_type.move
@@ -719,15 +723,15 @@ class Action:
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
     
-    def atkselect(self,unit): 
-        self.atkrange = unit.unit_type.range
+    def atkselect(self,unit,attackrange): 
+        self.atkrange = attackrange
         self.tile = unit.tile
         self.x = unit.tile.x
         self.y = unit.tile.y
         self.actionablespaces = []
         tempattackspaces = []
         tempattackspaces2 = [self.tile]
-        for i in range (self.atkrange):
+        for i in range(self.atkrange):
             for tile in tempattackspaces2:
                 if tile.x < MAP_SIZE - 1:
                     if self.game.map.find_tile(tile.x+1,tile.y) not in  tempattackspaces:
@@ -810,6 +814,66 @@ class Action:
         self.game.contextWindow.draw()
         self.game.map.draw()
         self.actionablespaces.clear()
+    def chargeselect(self,unit,attackrange): 
+        self.atkrange = attackrange
+        self.tile = unit.tile
+        self.x = unit.tile.x
+        self.y = unit.tile.y
+        self.actionablespaces = []
+        tempattackspaces = []
+        tempattackspaces2 = [self.tile]
+        for i in range(self.atkrange):
+            for tile in tempattackspaces2:
+                if tile.x < MAP_SIZE - 1:
+                    tile2 = self.game.map.find_tile(tile.x+1,tile.y)
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                if tile.x > 0:
+                    tile2 = self.game.map.find_tile(tile.x-1,tile.y)
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                if tile.y < MAP_SIZE - 1 :
+                    tile2 = self.game.map.find_tile(tile.x,tile.y+1)
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                if tile.y > 0:
+                    tile2 = self.game.map.find_tile(tile.x,tile.y-1)
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
+                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+            for tile in tempattackspaces:
+                tempattackspaces2.append(tile)
+            tempattackspaces.clear()
+        tempattackspaces2.remove(self.tile)
+        for tile in tempattackspaces2:
+            if tile.unit != None:
+                if tile.unit.team != unit.team:
+                    self.actionablespaces.append(tile)
+        self.tileselectiondraw(self.actionablespaces)
+        self.game.battle.action = True
+    def charge(self, attacked_tile,hits):
+        xspace = 0
+        yspace = 0
+        attacked_tile.unit.life = attacked_tile.unit.life - hits
+        if  attacked_tile.unit.life <= 0:
+            attacked_tile.unit.die()
+        if self.game.contextWindow.chosen_unit.tile.x - attacked_tile.x >0:
+            xspace = attacked_tile.x +1
+        if self.game.contextWindow.chosen_unit.tile.x - attacked_tile.x <0:
+            xspace = attacked_tile.x -1
+        if self.game.contextWindow.chosen_unit.tile.y - attacked_tile.y >0:
+            yspace = attacked_tile.y + 1
+        if self.game.contextWindow.chosen_unit.tile.y - attacked_tile.y <0:
+            yspace = attacked_tile.y - 1
+        new_tile = self.game.map.find_tile(xspace,yspace)
+        old_tile = self.game.contextWindow.chosen_unit.tile
+        new_tile.unit = old_tile.unit
+        old_tile.unit = None
+        new_tile.unit.tile = new_tile
+        self.actionablespaces = []
+        self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
+        self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
+        self.game.contextWindow.draw()
+        
 
     def harvestselect(self,unit):
         self.tile = unit.tile
