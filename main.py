@@ -537,9 +537,9 @@ class Team:
         self.name = name
         self.color = color
         self.units = []
-        self.wood = 1
-        self.stone = 2
-        self.metal = 3
+        self.wood = 0
+        self.stone = 0
+        self.metal = 0
 
 class Unit:
     def __init__(self, team, unit_type, tile):
