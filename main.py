@@ -287,7 +287,7 @@ class Battle:
                     #        rect.topleft = self.w / 2 + self.tilesize * i, self.tilesize * j
                     #        Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect)
             pygame.display.update()
-        Game.gameoverscreen()
+        Game.gameoverscreen(self.game.turn.current_team.name,self.game.turn.current_team.color)
 
 
 
@@ -306,9 +306,10 @@ class Game:
             self.battle = Battle(self)
             self.turn = Turn(self) 
             self.battle.run()
-    def gameoverscreen():
+    def gameoverscreen(winningteam,color):
         Game.screen.fill(Color('gray'))
-        a = Text('gameover',Game.screen.get_width()/2,Game.screen.get_height()/2,80,'purple')
+        a = Text(winningteam+' wins',Game.screen.get_width()/2,Game.screen.get_height()/2,200,color)
+        a.rect.topleft = Game.screen.get_width()/2 - (a.rect.width/2),Game.screen.get_height()/2 - (a.rect.height/2)
         a.draw()
         pygame.display.update()
         time.sleep(2)
@@ -826,45 +827,73 @@ class Action:
             for tile in tempattackspaces2:
                 if tile.x < MAP_SIZE - 1:
                     tile2 = self.game.map.find_tile(tile.x+1,tile.y)
-                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
-                        tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 :
+                        if tile2.unit == None or tile2 == self.tile:
+                            tempattackspaces.append(self.game.map.find_tile(tile.x+1,tile.y))
+                        elif tile2.unit.team != unit.team:
+                            self.actionablespaces.append(tile2)
                 if tile.x > 0:
                     tile2 = self.game.map.find_tile(tile.x-1,tile.y)
-                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
-                        tempattackspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 :
+                        if tile2.unit == None or tile2 == self.tile:
+                            tempattackspaces.append(self.game.map.find_tile(tile.x-1,tile.y))
+                        elif tile2.unit.team != unit.team:
+                            self.actionablespaces.append(tile2)
                 if tile.y < MAP_SIZE - 1 :
                     tile2 = self.game.map.find_tile(tile.x,tile.y+1)
-                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
-                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 :
+                        if tile2.unit == None or tile2 == self.tile:
+                            tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y+1))
+                        elif tile2.unit.team != unit.team:
+                            self.actionablespaces.append(tile2)
                 if tile.y > 0:
                     tile2 = self.game.map.find_tile(tile.x,tile.y-1)
-                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 and tile2.unit == None:
-                        tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+                    if tile2 not in  tempattackspaces and tile2.type != 3 and tile2.type != 10 and tile2.type != 11 and tile2.type != 12 and tile2.type != 13 :
+                        if tile2.unit == None or tile2 == self.tile:
+                            tempattackspaces.append(self.game.map.find_tile(tile.x,tile.y-1))
+                        elif tile2.unit.team != unit.team:
+                            self.actionablespaces.append(tile2)
             for tile in tempattackspaces:
                 tempattackspaces2.append(tile)
             tempattackspaces.clear()
         tempattackspaces2.remove(self.tile)
         for tile in tempattackspaces2:
-            if tile.unit != None:
-                if tile.unit.team != unit.team:
-                    self.actionablespaces.append(tile)
+            if tile not in self.actionablespaces:
+                if tile.unit != None:
+                    if tile.unit.team != unit.team:
+                        self.actionablespaces.append(tile)
         self.tileselectiondraw(self.actionablespaces)
         self.game.battle.action = True
+
     def charge(self, attacked_tile,hits):
         xspace = 0
         yspace = 0
+        xmod = 1
+        ymod = 1
         attacked_tile.unit.life = attacked_tile.unit.life - hits
         if  attacked_tile.unit.life <= 0:
             attacked_tile.unit.die()
         if self.game.contextWindow.chosen_unit.tile.x - attacked_tile.x >0:
-            xspace = attacked_tile.x +1
+            xmod =  1
         if self.game.contextWindow.chosen_unit.tile.x - attacked_tile.x <0:
-            xspace = attacked_tile.x -1
+            xmod =  -1
         if self.game.contextWindow.chosen_unit.tile.y - attacked_tile.y >0:
-            yspace = attacked_tile.y + 1
+            ymod =   1
         if self.game.contextWindow.chosen_unit.tile.y - attacked_tile.y <0:
-            yspace = attacked_tile.y - 1
+            ymod =  - 1
+        xspace = attacked_tile.x+xmod
+        yspace = attacked_tile.y
         new_tile = self.game.map.find_tile(xspace,yspace)
+        if  new_tile.type == 3 or new_tile.type == 10 or new_tile.type == 11 or new_tile.type == 12 or new_tile.type == 13 or new_tile.unit != None:
+            xspace = xspace - 2*xmod
+            new_tile = self.game.map.find_tile(xspace,yspace)
+            if  new_tile.type == 3 or new_tile.type == 10 or new_tile.type == 11 or new_tile.type == 12 or new_tile.type == 13 or new_tile.unit != None:
+                xspace = xspace +xmod
+                yspace = yspace + ymod
+                new_tile = self.game.map.find_tile(xspace,yspace)
+                if  new_tile.type == 3 or new_tile.type == 10 or new_tile.type == 11 or new_tile.type == 12 or new_tile.type == 13 or new_tile.unit != None:
+                    yspace = yspace - 2*ymod
+                    new_tile = self.game.map.find_tile(xspace,yspace)
         old_tile = self.game.contextWindow.chosen_unit.tile
         new_tile.unit = old_tile.unit
         old_tile.unit = None
