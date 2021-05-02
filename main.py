@@ -902,6 +902,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        self.gmae.map.draw()
         
 
     def harvestselect(self,unit):
