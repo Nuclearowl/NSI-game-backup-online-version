@@ -776,9 +776,11 @@ class Action:
         if  attacked_tile.unit.life <= 0:
             attacked_tile.unit.die()
         self.actionablespaces = []
+        self.game.map.draw()
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
+        
 
     def placebaseselect(self):
         self.actionablespaces = []
