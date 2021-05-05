@@ -188,6 +188,7 @@ class Battle:
                 if event.type == QUIT:
                     #Permet de quitter l'application
                     pygame.quit()
+                    sys.exit()
                 if event.type == MOUSEMOTION :
                         self.map.draw()
                         self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
