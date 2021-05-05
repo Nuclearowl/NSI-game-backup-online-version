@@ -906,7 +906,7 @@ class Action:
         self.game.contextWindow.chosen_unit.movesleft = self.game.contextWindow.chosen_unit.movesleft - 1
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
-        self.gmae.map.draw()
+        self.game.map.draw()
         
 
     def harvestselect(self,unit):
@@ -1005,6 +1005,7 @@ class Action:
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
         self.game.map.draw()
+        self.draw_resources(self.turn.current_team)
 
     def spawnworker(self,tile):
         self.actionablespaces = []
@@ -1017,6 +1018,7 @@ class Action:
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
         self.game.map.draw()
+        self.draw_resources(self.turn.current_team)
 
     def spawncavalry(self,tile):
         self.actionablespaces = []
@@ -1029,6 +1031,7 @@ class Action:
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
         self.game.map.draw()
+        self.draw_resources(self.turn.current_team)
 
     def spawnarchers(self,tile):
         self.actionablespaces = []
@@ -1041,6 +1044,7 @@ class Action:
         self.game.contextWindow.set_description(self.game.contextWindow.chosen_unit.tile.id)
         self.game.contextWindow.draw()
         self.game.map.draw()
+        self.draw_resources(self.turn.current_team)
 
     def tileselectiondraw(self,tiles):
         for tile in tiles:
