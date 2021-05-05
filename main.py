@@ -181,11 +181,13 @@ class Battle:
         self.map.draw()
         Battle.running = True
         while Battle.running:
+            #Montre l'ecran
+            pygame.display.update()
             #Prend tous les evenements du joueur
             for event in pygame.event.get():
                 if event.type == QUIT:
                     #Permet de quitter l'application
-                    Battle.running = False
+                    pygame.quit()
                 if event.type == MOUSEMOTION :
                         self.map.draw()
                         self.game.turn.action.tileselectiondraw(self.game.turn.action.actionablespaces)
@@ -285,9 +287,9 @@ class Battle:
                     #    for j in range(1, MAP_SIZE+1):
                     #        rect = self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]].get_rect()
                     #        rect.topleft = self.w / 2 + self.tilesize * i, self.tilesize * j
-                    #        Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect)
-            pygame.display.update()
-        Game.gameoverscreen(self.game.turn.current_team.name,self.game.turn.current_team.color)
+                    #        Game.screen.blit(self.colorgen[self.random_gen[i * MAP_SIZE + j - 1]], rect) 
+        self.game.gameoverscreen(self.game.turn.current_team.name,self.game.turn.current_team.color)
+        
 
 
 
@@ -306,14 +308,14 @@ class Game:
             self.battle = Battle(self)
             self.turn = Turn(self) 
             self.battle.run()
-    def gameoverscreen(winningteam,color):
+    def gameoverscreen(self,winningteam,color):
         Game.screen.fill(Color('gray'))
         a = Text(winningteam+' wins',Game.screen.get_width()/2,Game.screen.get_height()/2,200,color)
         a.rect.topleft = Game.screen.get_width()/2 - (a.rect.width/2),Game.screen.get_height()/2 - (a.rect.height/2)
         a.draw()
         pygame.display.update()
         time.sleep(2)
-        pygame.quit()
+        self.run()
 
             
 class Map:
