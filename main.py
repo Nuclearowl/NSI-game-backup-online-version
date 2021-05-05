@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import time
+import sys
 import random
 BLACK = (0, 0, 0)
 GRAY = (127, 127, 127)
