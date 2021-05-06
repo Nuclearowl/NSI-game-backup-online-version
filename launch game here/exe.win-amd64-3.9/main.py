@@ -223,8 +223,8 @@ class Battle:
                         if self.game.turn.action.action_buttons != None:
                             for i in range(len(self.game.turn.action.action_buttons)):
                                 if self.game.turn.action.action_buttons[i].rect.collidepoint(event.__getattribute__('pos')):
-                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosen_unit)
                                     self.currentaction = self.game.turn.action.available_actions[i]
+                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosen_unit)
                         if self.currentsquare != None:
                                     pygame.draw.rect(Game.screen, Color('red'), Rect((Game.screen.get_width() / 2) + self.tilesize * self.currentsquare[0], self.tilesize * self.currentsquare[1], self.tilesize, self.tilesize), 1)
                          
@@ -252,11 +252,15 @@ class Battle:
                                         if self.currentaction == ACTION_CHARGE: 
                                             self.game.turn.action.charge(self.game.map.find_tile(i,j-1),self.game.turn.action.tile.unit.unit_type.hits)
                                         self.action = False           
-
                                     else:
                                         self.action = False
                                         self.currentaction = None
                                         self.game.turn.action.actionablespaces = []
+                        if self.game.turn.action.action_buttons != None:
+                            for i in range(len(self.game.turn.action.action_buttons)):
+                                if self.game.turn.action.action_buttons[i].rect.collidepoint(event.__getattribute__('pos')):
+                                    self.currentaction = self.game.turn.action.available_actions[i]
+                                    self.game.turn.action.take_action(self.game.turn.action.available_actions[i],self.game.contextWindow.chosen_unit)
                             
                 if event.type == MOUSEBUTTONUP :
                     for i in range(MAP_SIZE) :
@@ -599,6 +603,7 @@ class Turn:
         else:
             self.current_team = self.game.battle.teams[0]
         self.action.draw_window(self.current_team)
+        self.action.draw_buttons(None)
 
 class Action:
     def __init__(self, game, turn):
@@ -1057,6 +1062,7 @@ class Action:
             rect.topleft = Game.screen.get_width() / 2 + rect.width * tile.x, rect.height * (tile.y + 1)
             Game.screen.blit(img, rect)
     def endturn(self):
+        self.actionablespaces = []
         self.turn.change_turn()
 
 #class GlobalWindow:
