@@ -13,6 +13,6 @@ setup(
     version = "1.0",
     author = "Nathan Lefevre",
     description = "Jeu cree pour mon projet final de NSI, CNED",
-    options = {"build_exe": {"packages": ["pygame", "random", "sys","time"], "include_files": ['main.py',"grass.png","icelake.png","sand.png","forest.png","swamp.png","boulder.png","snowymountain.png","mountain.png","lava.png","volcano.png","water.png","redworker.png","redinfantry.png","redcavalry.png","redarchers.png","redbase.png","bluebase.png","blueworker.png","blueinfantry.png","bluecavalry.png","bluearchers.png"]}},
+    options = {"build_exe": {"packages": ["pygame", "random", "sys","time"], "include_files": ['main.py','icon.ico',"grass.png","icelake.png","sand.png","forest.png","swamp.png","boulder.png","snowymountain.png","mountain.png","lava.png","volcano.png","water.png","redworker.png","redinfantry.png","redcavalry.png","redarchers.png","redbase.png","bluebase.png","blueworker.png","blueinfantry.png","bluecavalry.png","bluearchers.png","wood.png","stone.png","metal.png"]}},
     executables = [exe]
 )  
